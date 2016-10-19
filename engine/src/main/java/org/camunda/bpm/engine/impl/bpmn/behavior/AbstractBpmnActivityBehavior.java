@@ -69,7 +69,7 @@ public class AbstractBpmnActivityBehavior extends FlowNodeActivityBehavior {
     if(compensationHandler != null && !isCompensationEventSubprocess(compensationHandler)) {
       createCompensateEventSubscription(execution, compensationHandler);
     }
-    super.leave(execution);
+    super.doLeave(execution);
   }
 
   protected boolean isCompensationEventSubprocess(ActivityImpl activity) {

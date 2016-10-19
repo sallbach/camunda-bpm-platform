@@ -59,7 +59,7 @@ public class SubProcessActivityBehavior extends AbstractBpmnActivityBehavior imp
   public void doLeave(ActivityExecution execution) {
     CompensationUtil.createEventScopeExecution((ExecutionEntity) execution);
 
-    super.leave(execution);
+    super.doLeave(execution);
   }
 
 }

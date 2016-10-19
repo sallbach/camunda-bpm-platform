@@ -377,7 +377,7 @@ public abstract class AbstractVariableScope implements Serializable, VariableSco
 
   protected void removeVariable(String variableName, AbstractVariableScope sourceActivityExecution) {
     if (getVariableStore().containsKey(variableName)) {
-      removeVariableLocal(variableName);
+      removeVariableLocal(variableName, sourceActivityExecution);
       return;
     }
     AbstractVariableScope parentVariableScope = getParentVariableScope();

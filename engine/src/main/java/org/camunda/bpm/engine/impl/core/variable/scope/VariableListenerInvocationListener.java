@@ -14,6 +14,7 @@ package org.camunda.bpm.engine.impl.core.variable.scope;
 
 import org.camunda.bpm.engine.delegate.VariableListener;
 import org.camunda.bpm.engine.impl.core.variable.event.VariableEvent;
+import org.camunda.bpm.engine.impl.persistence.entity.ExecutionEntity;
 import org.camunda.bpm.engine.impl.persistence.entity.VariableInstanceEntity;
 
 /**
@@ -30,16 +31,29 @@ public class VariableListenerInvocationListener implements VariableInstanceLifec
 
   @Override
   public void onCreate(VariableInstanceEntity variable, AbstractVariableScope sourceScope) {
-    targetScope.dispatchEvent(new VariableEvent(variable, VariableListener.CREATE, sourceScope));
+
+    handleEvent(new VariableEvent(variable, VariableListener.CREATE, sourceScope));
   }
 
   @Override
   public void onUpdate(VariableInstanceEntity variable, AbstractVariableScope sourceScope) {
-    targetScope.dispatchEvent(new VariableEvent(variable, VariableListener.UPDATE, sourceScope));
+    handleEvent(new VariableEvent(variable, VariableListener.UPDATE, sourceScope));
   }
 
   @Override
   public void onDelete(VariableInstanceEntity variable, AbstractVariableScope sourceScope) {
-    targetScope.dispatchEvent(new VariableEvent(variable, VariableListener.DELETE, sourceScope));
+    handleEvent(new VariableEvent(variable, VariableListener.DELETE, sourceScope));
+  }
+
+  protected void handleEvent(VariableEvent event) {
+    AbstractVariableScope sourceScope = event.getSourceScope();
+
+    if (sourceScope instanceof ExecutionEntity) {
+      ExecutionEntity sourceExecution = (ExecutionEntity) sourceScope;
+      ExecutionEntity scopeExecution = sourceExecution.isScope() ? sourceExecution : sourceExecution.getParent();
+      scopeExecution.delayEvent((ExecutionEntity) targetScope, event);
+    } else {
+      targetScope.dispatchEvent(event);
+    }
   }
 }

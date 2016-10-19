@@ -162,6 +162,34 @@ public class ExecutionEntity extends PvmExecutionImpl implements Execution, Proc
   protected transient VariableStore<VariableInstanceEntity> variableStore =
       new VariableStore<VariableInstanceEntity>(this, new ExecutionEntityReferencer(this));
 
+  protected List<DelayedVariableEvent> delayedEvents = new ArrayList<DelayedVariableEvent>();
+  protected PvmAtomicOperation nextOperation;
+
+  public void delayEvent(ExecutionEntity targetScope, VariableEvent variableEvent) {
+    DelayedVariableEvent delayedEvent = new DelayedVariableEvent(targetScope, variableEvent);
+    delayedEvents.add(delayedEvent);
+  }
+
+  public List<DelayedVariableEvent> getDelayedEvents() {
+    return delayedEvents;
+  }
+
+  public void clearDelayedEvents()
+  {
+    delayedEvents.clear();
+  }
+
+  public PvmAtomicOperation popNextOperation() {
+    PvmAtomicOperation op = nextOperation;
+    nextOperation = null;
+    return op;
+  }
+
+  public void dispatchDelayedEventsAndPerformOperation(PvmAtomicOperation atomicOperation) {
+    nextOperation = atomicOperation;
+    performOperationSync(PvmAtomicOperation.DISPATCH_EVENTS);
+  }
+
   // replaced by //////////////////////////////////////////////////////////////
 
   protected int suspensionState = SuspensionState.ACTIVE.getStateCode();

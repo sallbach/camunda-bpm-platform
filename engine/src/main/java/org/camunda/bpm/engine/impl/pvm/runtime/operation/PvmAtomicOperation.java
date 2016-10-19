@@ -54,4 +54,5 @@ public interface PvmAtomicOperation extends CoreAtomicOperation<PvmExecutionImpl
   PvmAtomicOperation DELETE_CASCADE_FIRE_ACTIVITY_END = new PvmAtomicOperationDeleteCascadeFireActivityEnd();
 
   PvmAtomicOperation DISPATCH_EVENTS = new PvmAtomicOperationScopeDispatchDelayedEvents();
+  PvmAtomicOperation ACTIVITY_LEAVE = new PvmAtomicOperationActivityLeave();
 }

@@ -513,7 +513,7 @@ public class BoundaryConditionalEventTest extends AbstractConditionalEventTestCa
   }
 
 
-  @Ignore
+  @Test
   public void testSetVariableInInputMapping() {
     final BpmnModelInstance modelInstance = Bpmn.createExecutableProcess(CONDITIONAL_EVENT_PROCESS_KEY)
                                                   .startEvent().userTask().name(TASK_BEFORE_CONDITION)
@@ -630,7 +630,7 @@ public class BoundaryConditionalEventTest extends AbstractConditionalEventTestCa
     assertEquals(1, conditionEventSubscriptionQuery.list().size());
   }
 
-  @Ignore
+  @Test
   public void testSetVariableInInputMappingOfSubProcess() {
     final BpmnModelInstance modelInstance = Bpmn.createExecutableProcess(CONDITIONAL_EVENT_PROCESS_KEY)
                                                   .startEvent().userTask().name(TASK_BEFORE_CONDITION)
@@ -903,7 +903,7 @@ public class BoundaryConditionalEventTest extends AbstractConditionalEventTestCa
     assertEquals(1, conditionEventSubscriptionQuery.list().size());
   }
 
-  @Ignore
+  @Test
   public void testSetVariableInStartListener() {
     final BpmnModelInstance modelInstance = Bpmn.createExecutableProcess(CONDITIONAL_EVENT_PROCESS_KEY)
                                                   .startEvent()
@@ -1061,7 +1061,7 @@ public class BoundaryConditionalEventTest extends AbstractConditionalEventTestCa
     assertEquals(TASK_AFTER_CONDITION, task.getName());
   }
 
-  @Ignore
+  @Test
   public void testNonInterruptingSetVariableInEndListener() {
     final BpmnModelInstance modelInstance = Bpmn.createExecutableProcess(CONDITIONAL_EVENT_PROCESS_KEY)
                                                   .startEvent()
@@ -1091,7 +1091,7 @@ public class BoundaryConditionalEventTest extends AbstractConditionalEventTestCa
     assertEquals(1, conditionEventSubscriptionQuery.list().size());
   }
 
-  @Ignore
+  @Test
   public void testSetVariableInMultiInstance() {
     final BpmnModelInstance modelInstance = Bpmn.createExecutableProcess(CONDITIONAL_EVENT_PROCESS_KEY)
                                                   .startEvent()
@@ -1122,7 +1122,7 @@ public class BoundaryConditionalEventTest extends AbstractConditionalEventTestCa
     assertEquals(TASK_AFTER_CONDITION, task.getName());
   }
 
-  @Ignore
+  @Test
   public void testNonInterruptingSetVariableInMultiInstance() {
     final BpmnModelInstance modelInstance = Bpmn.createExecutableProcess(CONDITIONAL_EVENT_PROCESS_KEY)
                                                   .startEvent()

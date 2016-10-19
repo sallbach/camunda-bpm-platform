@@ -39,7 +39,7 @@ public class ServiceTaskJavaDelegateActivityBehavior extends TaskActivityBehavio
   @Override
   public void performExecution(ActivityExecution execution) throws Exception {
     execute((DelegateExecution) execution);
-    tryToLeave(execution);
+    leave(execution);
   }
 
   public void notify(DelegateExecution execution) throws Exception {

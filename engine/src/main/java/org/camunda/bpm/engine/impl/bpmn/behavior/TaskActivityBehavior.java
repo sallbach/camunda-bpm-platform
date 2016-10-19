@@ -62,35 +62,7 @@ public class TaskActivityBehavior extends AbstractBpmnActivityBehavior {
 
   @Override
   public void execute(ActivityExecution execution) throws Exception {
-    preExecution(execution);
     performExecution(execution);
-    postExecution(execution);
-  }
-
-  /**
-   * Method which should be called in the performExecution method. Since in
-   * this execution method we have to check if we can leave the activity.
-   * In signal method we have to call the normal leave method, since we
-   * are triggered from outside.
-   *
-   * @param execution the execution which should be left
-   */
-  protected void tryToLeave(ActivityExecution execution) {
-    //if execution is not active after delegated execution the tree was expand
-    //we have to check out replacedExecution (in case of non interrupting events)
-    if (!execution.isActive()) {
-      ExecutionEntity replacedExecution = ((ExecutionEntity) execution).getReplacedBy();
-      if (replacedExecution != null) {
-        execution = replacedExecution;
-      }
-    }
-
-    //in both cases (interrupting and non interrupting events)
-    //we have to check if activity instance was changed -> if yes, leave is not ok
-    //leave was already triggered (for example for conditional events)
-    if (activityInstanceId != null && activityInstanceId.equals(execution.getActivityInstanceId())) {
-      super.leave(execution);
-    }
   }
 
 

@@ -21,6 +21,7 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
 import org.camunda.bpm.engine.ProcessEngineServices;
 import org.camunda.bpm.engine.delegate.ExecutionListener;
 import org.camunda.bpm.engine.impl.ProcessEngineLogger;
@@ -72,6 +73,7 @@ import org.camunda.bpm.engine.impl.pvm.runtime.ProcessInstanceStartContext;
 import org.camunda.bpm.engine.impl.pvm.runtime.PvmExecutionImpl;
 import org.camunda.bpm.engine.impl.pvm.runtime.operation.FoxAtomicOperationDeleteCascadeFireActivityEnd;
 import org.camunda.bpm.engine.impl.pvm.runtime.operation.PvmAtomicOperation;
+import org.camunda.bpm.engine.impl.pvm.runtime.operation.PvmAtomicOperationContinuation;
 import org.camunda.bpm.engine.impl.tree.ExecutionTopDownWalker;
 import org.camunda.bpm.engine.impl.tree.TreeVisitor;
 import org.camunda.bpm.engine.impl.util.BitMaskUtil;
@@ -163,7 +165,7 @@ public class ExecutionEntity extends PvmExecutionImpl implements Execution, Proc
       new VariableStore<VariableInstanceEntity>(this, new ExecutionEntityReferencer(this));
 
   protected List<DelayedVariableEvent> delayedEvents = new ArrayList<DelayedVariableEvent>();
-  protected PvmAtomicOperation nextOperation;
+  protected PvmAtomicOperationContinuation continuation;
 
   public void delayEvent(ExecutionEntity targetScope, VariableEvent variableEvent) {
     DelayedVariableEvent delayedEvent = new DelayedVariableEvent(targetScope, variableEvent);
@@ -179,14 +181,24 @@ public class ExecutionEntity extends PvmExecutionImpl implements Execution, Proc
     delayedEvents.clear();
   }
 
-  public PvmAtomicOperation popNextOperation() {
-    PvmAtomicOperation op = nextOperation;
-    nextOperation = null;
+  public PvmAtomicOperationContinuation popContinuation() {
+    PvmAtomicOperationContinuation op = continuation;
+    continuation = null;
     return op;
   }
 
-  public void dispatchDelayedEventsAndPerformOperation(PvmAtomicOperation atomicOperation) {
-    nextOperation = atomicOperation;
+  public void dispatchDelayedEventsAndPerformOperation(final PvmAtomicOperation atomicOperation) {
+    dispatchDelayedEventsAndPerformOperation(new PvmAtomicOperationContinuation() {
+
+        @Override
+        public void execute(PvmExecutionImpl execution) {
+          execution.performOperation(atomicOperation);
+        }
+      });
+  }
+
+  public void dispatchDelayedEventsAndPerformOperation(PvmAtomicOperationContinuation continuation) {
+    this.continuation = continuation;
     performOperationSync(PvmAtomicOperation.DISPATCH_EVENTS);
   }
 

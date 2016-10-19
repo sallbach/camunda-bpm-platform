@@ -42,7 +42,7 @@ public class BoundaryConditionalEventActivityBehavior extends BoundaryEventActiv
         && variableEvent != null
         && conditionalEvent.tryEvaluate(variableEvent, execution)
         && execution.isScope()) {
-      execution.executeActivity(eventSubscription.getActivity());
+      execution.executeEventHandlerActivity(eventSubscription.getActivity());
     }
   }
 }

@@ -33,7 +33,7 @@ public class PvmAtomicOperationScopeDispatchDelayedEvents implements PvmAtomicOp
   @Override
   public void execute(PvmExecutionImpl execution) {
     ExecutionEntity executionEntity = (ExecutionEntity) execution;
-    PvmAtomicOperation nextOperation = executionEntity.popNextOperation();
+    PvmAtomicOperationContinuation nextOperation = executionEntity.popContinuation();
 
     String activityInstanceId = getActivityInstanceId(executionEntity);
 
@@ -43,7 +43,7 @@ public class PvmAtomicOperationScopeDispatchDelayedEvents implements PvmAtomicOp
     String currentActivityInstanceId = getActivityInstanceId(executionEntity);
 
     if (nextOperation != null && activityInstanceId.equals(currentActivityInstanceId) && !executionEntity.isCanceled()) {
-      executionEntity.performOperation(nextOperation);
+      nextOperation.execute(executionEntity);
     }
   }
 

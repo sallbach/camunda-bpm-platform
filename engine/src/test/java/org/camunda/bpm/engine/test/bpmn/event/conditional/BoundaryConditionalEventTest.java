@@ -25,6 +25,7 @@ import java.util.List;
 import java.util.Map;
 
 import org.camunda.bpm.engine.delegate.ExecutionListener;
+import org.camunda.bpm.engine.runtime.ActivityInstance;
 import org.camunda.bpm.engine.runtime.Execution;
 import org.camunda.bpm.engine.runtime.ProcessInstance;
 import org.camunda.bpm.engine.task.Task;
@@ -48,6 +49,8 @@ public class BoundaryConditionalEventTest extends AbstractConditionalEventTestCa
   protected static final String TASK_WITH_CONDITION = "Task with condition";
   protected static final String TASK_WITH_CONDITION_ID = "taskWithCondition";
   protected static final String TASK_IN_SUBPROCESS = "Task in Subprocess";
+
+  // TODO: test process instance can complete successfully
 
   @Test
   @Deployment
@@ -509,7 +512,10 @@ public class BoundaryConditionalEventTest extends AbstractConditionalEventTestCa
     //execution stays at user task after condition and after service task
     List<Task> tasks = taskQuery.list();
     assertEquals(2, tasks.size());
-    assertEquals(1, conditionEventSubscriptionQuery.list().size());
+
+    taskService.complete(tasks.get(0).getId());
+    taskService.complete(tasks.get(1).getId());
+    assertEquals(0, engine.getRuntimeService().createProcessInstanceQuery().count());
   }
 
 
@@ -570,7 +576,6 @@ public class BoundaryConditionalEventTest extends AbstractConditionalEventTestCa
     //execution stays at user task after condition and after service task
     List<Task> tasks = taskQuery.list();
     assertEquals(2, tasks.size());
-    assertEquals(1, conditionEventSubscriptionQuery.list().size());
   }
 
 
@@ -627,7 +632,6 @@ public class BoundaryConditionalEventTest extends AbstractConditionalEventTestCa
     //->non interrupting conditional event is triggered
     List<Task> tasks = taskQuery.list();
     assertEquals(2, tasks.size());
-    assertEquals(1, conditionEventSubscriptionQuery.list().size());
   }
 
   @Test
@@ -838,7 +842,7 @@ public class BoundaryConditionalEventTest extends AbstractConditionalEventTestCa
                                                   .callActivity(TASK_WITH_CONDITION_ID)
                                                     .calledElement("delegatedProcess")
                                                     .camundaOutputParameter(VARIABLE_NAME, "1")
-                                                  .userTask().name("afterOutputMapping")
+                                                  .userTask("afterOutputMapping")
                                                   .endEvent()
                                                   .done();
     deployBoundaryEventProcess(modify(modelInstance).activityBuilder(TASK_WITH_CONDITION_ID), true);
@@ -858,7 +862,7 @@ public class BoundaryConditionalEventTest extends AbstractConditionalEventTestCa
     //-> interrupting conditional event is triggered
     task = taskQuery.singleResult();
     assertNotNull(task);
-    assertEquals(TASK_AFTER_CONDITION, task.getName());
+    assertEquals("afterOutputMapping", task.getTaskDefinitionKey());
   }
 
   @Test
@@ -896,11 +900,11 @@ public class BoundaryConditionalEventTest extends AbstractConditionalEventTestCa
     //when task before service task is completed
     taskService.complete(task.getId());
 
-    //then input mapping from sub process sets variable
-    //-> non interrupting conditional event is triggered
+    //then out mapping of call activity sets a variable
+    //-> non interrupting conditional event is not triggered
     List<Task> tasks = taskQuery.list();
-    assertEquals(2, tasks.size());
-    assertEquals(1, conditionEventSubscriptionQuery.list().size());
+    assertEquals(1, tasks.size());
+    assertEquals("afterOutputMapping", tasks.get(0).getTaskDefinitionKey());
   }
 
   @Test
@@ -1087,8 +1091,8 @@ public class BoundaryConditionalEventTest extends AbstractConditionalEventTestCa
     //then start listener sets variable
     //non interrupting boundary event is triggered
     List<Task> tasks = taskQuery.list();
-    assertEquals(2, tasks.size());
-    assertEquals(1, conditionEventSubscriptionQuery.list().size());
+    assertEquals(1, tasks.size()); // TODO: end listener should not be able to trigger boundary event
+    assertEquals(TASK_WITH_CONDITION_ID, tasks.get(0).getTaskDefinitionKey());
   }
 
   @Test

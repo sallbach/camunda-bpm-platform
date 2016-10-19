@@ -12,9 +12,11 @@
  */
 package org.camunda.bpm.engine.impl.core.variable.scope;
 
+import org.camunda.bpm.engine.ProcessEngineException;
 import org.camunda.bpm.engine.delegate.VariableListener;
 import org.camunda.bpm.engine.impl.core.variable.event.VariableEvent;
 import org.camunda.bpm.engine.impl.persistence.entity.ExecutionEntity;
+import org.camunda.bpm.engine.impl.persistence.entity.TaskEntity;
 import org.camunda.bpm.engine.impl.persistence.entity.VariableInstanceEntity;
 
 /**
@@ -49,11 +51,23 @@ public class VariableListenerInvocationListener implements VariableInstanceLifec
     AbstractVariableScope sourceScope = event.getSourceScope();
 
     if (sourceScope instanceof ExecutionEntity) {
-      ExecutionEntity sourceExecution = (ExecutionEntity) sourceScope;
-      ExecutionEntity scopeExecution = sourceExecution.isScope() ? sourceExecution : sourceExecution.getParent();
-      scopeExecution.delayEvent((ExecutionEntity) targetScope, event);
+      addEventToScopeExecution((ExecutionEntity) sourceScope, event);
+    } else if (sourceScope instanceof TaskEntity) {
+      TaskEntity task = (TaskEntity) sourceScope;
+      ExecutionEntity execution = task.getExecution();
+      if (execution != null) {
+        addEventToScopeExecution(execution, event);
+      }
     } else {
-      targetScope.dispatchEvent(event);
+      throw new ProcessEngineException("BPMN execution scope expected");
     }
+  }
+  protected void addEventToScopeExecution(ExecutionEntity sourceScope, VariableEvent event) {
+
+    // ignore events of variables that are not set in an execution
+    ExecutionEntity sourceExecution = (ExecutionEntity) sourceScope;
+    ExecutionEntity scopeExecution = sourceExecution.isScope() ? sourceExecution : sourceExecution.getParent();
+    scopeExecution.delayEvent((ExecutionEntity) targetScope, event);
+
   }
 }

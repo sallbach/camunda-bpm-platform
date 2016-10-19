@@ -284,6 +284,7 @@ public abstract class AbstractVariableScope implements Serializable, VariableSco
   public void setVariable(String variableName, Object value) {
     TypedValue typedValue = Variables.untypedValue(value);
     setVariable(variableName, typedValue, getSourceActivityVariableScope());
+
   }
 
   protected void setVariable(String variableName, TypedValue value, AbstractVariableScope sourceActivityVariableScope) {

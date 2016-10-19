@@ -15,29 +15,29 @@
  */
 package org.camunda.bpm.engine.test.bpmn.event.conditional;
 
-import java.util.List;
-import java.util.Map;
 import static junit.framework.Assert.assertEquals;
 import static junit.framework.Assert.assertNotNull;
+import static junit.framework.Assert.assertNull;
+import static org.camunda.bpm.engine.test.api.runtime.migration.ModifiableBpmnModelInstance.modify;
+import static org.camunda.bpm.engine.test.bpmn.event.conditional.EventSubProcessStartConditionalEventTest.TASK_AFTER_SERVICE_TASK;
+
+import java.util.List;
+import java.util.Map;
+
+import org.camunda.bpm.engine.delegate.ExecutionListener;
 import org.camunda.bpm.engine.runtime.Execution;
 import org.camunda.bpm.engine.runtime.ProcessInstance;
 import org.camunda.bpm.engine.task.Task;
 import org.camunda.bpm.engine.task.TaskQuery;
 import org.camunda.bpm.engine.test.Deployment;
-import org.junit.Test;
-import static org.camunda.bpm.engine.test.bpmn.event.conditional.AbstractConditionalEventTestCase.TASK_MODEL;
-import org.camunda.bpm.model.bpmn.BpmnModelInstance;
 import org.camunda.bpm.engine.variable.Variables;
-import static junit.framework.Assert.assertNull;
-import org.camunda.bpm.engine.delegate.ExecutionListener;
-import static org.camunda.bpm.engine.test.api.runtime.migration.ModifiableBpmnModelInstance.modify;
-import static org.camunda.bpm.engine.test.bpmn.event.conditional.AbstractConditionalEventTestCase.CONDITIONAL_EVENT_PROCESS_KEY;
-import static org.camunda.bpm.engine.test.bpmn.event.conditional.EventSubProcessStartConditionalEventTest.TASK_AFTER_SERVICE_TASK;
 import org.camunda.bpm.model.bpmn.Bpmn;
+import org.camunda.bpm.model.bpmn.BpmnModelInstance;
 import org.camunda.bpm.model.bpmn.builder.AbstractActivityBuilder;
 import org.camunda.bpm.model.bpmn.instance.SequenceFlow;
 import org.camunda.bpm.model.bpmn.instance.camunda.CamundaExecutionListener;
-import org.junit.Ignore;
+import org.junit.Assert;
+import org.junit.Test;
 
 /**
  *
@@ -62,7 +62,7 @@ public class BoundaryConditionalEventTest extends AbstractConditionalEventTestCa
     assertEquals(1, conditionEventSubscriptionQuery.list().size());
 
     //when variable is set on task execution
-    taskService.setVariable(task.getId(), VARIABLE_NAME, 1);
+    runtimeService.setVariable(task.getExecutionId(), VARIABLE_NAME, 1);
 
     //then execution is at user task after boundary event
     task = taskQuery.singleResult();
@@ -1419,6 +1419,49 @@ public class BoundaryConditionalEventTest extends AbstractConditionalEventTestCa
     List<Task> tasks = taskQuery.taskName(TASK_AFTER_CONDITION).list();
     assertEquals(2, tasks.size());
     assertEquals(1, conditionEventSubscriptionQuery.list().size());
+  }
+
+  @Test
+  public void testSetMultipleVariables() {
+
+    // given
+    BpmnModelInstance modelInstance = modify(TASK_MODEL)
+        .userTaskBuilder(TASK_BEFORE_CONDITION_ID)
+        .boundaryEvent()
+          .cancelActivity(true)
+          .conditionalEventDefinition("event1")
+          .condition("${variable1 == 1}")
+          .conditionalEventDefinitionDone()
+        .userTask("afterBoundary1")
+        .endEvent()
+        .moveToActivity(TASK_BEFORE_CONDITION_ID)
+        .boundaryEvent()
+          .cancelActivity(true)
+          .conditionalEventDefinition("event2")
+          .condition("${variable2 == 1}")
+          .conditionalEventDefinitionDone()
+        .userTask("afterBoundary2")
+        .endEvent()
+        .done();
+
+    engine.manageDeployment(repositoryService.createDeployment().addModelInstance(CONDITIONAL_MODEL, modelInstance).deploy());
+
+    ProcessInstance processInstance = engine.getRuntimeService().startProcessInstanceByKey(CONDITIONAL_EVENT_PROCESS_KEY, Variables.createVariables().putValue("variable1", "44").putValue("variable2", "44"));
+
+    Task task = engine.getTaskService().createTaskQuery().singleResult();
+
+    // when
+    taskService.setVariables(task.getId(), Variables
+        .createVariables()
+        .putValue("variable1", 1)
+        .putValue("variable2", 1));
+
+    // then
+    assertEquals(1, engine.getTaskService().createTaskQuery().count());
+    Task afterBoundary1Task = engine.getTaskService().createTaskQuery().singleResult();
+    String taskDefinitionKey = afterBoundary1Task.getTaskDefinitionKey();
+    Assert.assertTrue("afterBoundary1".equals(taskDefinitionKey) || "afterBoundary2".equals(taskDefinitionKey));
+
   }
 
   @Test

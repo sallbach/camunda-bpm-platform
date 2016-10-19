@@ -41,7 +41,7 @@ public class PvmAtomicOperationScopeDispatchDelayedEvents implements PvmAtomicOp
     executionEntity = executionEntity.getReplacedBy() != null ? executionEntity.getReplacedBy() : executionEntity;
     String currentActivityInstanceId = getActivityInstanceId(executionEntity);
 
-    if (activityInstanceId.equals(currentActivityInstanceId) && !executionEntity.isEnded()) {
+    if (nextOperation != null && activityInstanceId.equals(currentActivityInstanceId) && !executionEntity.isEnded()) {
       executionEntity.performOperation(nextOperation);
     }
   }

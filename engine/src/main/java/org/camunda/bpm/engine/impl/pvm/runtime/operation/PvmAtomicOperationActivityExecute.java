@@ -32,9 +32,8 @@ public class PvmAtomicOperationActivityExecute implements PvmAtomicOperation {
   }
 
   public void execute(PvmExecutionImpl execution) {
-    if (execution.wasInterrupted()) {
-      return;
-    }
+
+    execution.activityInstanceStarted();
 
     ActivityBehavior activityBehavior = getActivityBehavior(execution);
 

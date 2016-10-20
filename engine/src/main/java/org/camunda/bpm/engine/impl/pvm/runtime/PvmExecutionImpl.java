@@ -303,19 +303,7 @@ public abstract class PvmExecutionImpl extends CoreExecution implements Activity
     interrupt(reason, false, false);
   }
 
-  protected boolean wasInterrupted;
-
-  public boolean wasInterrupted() {
-    return wasInterrupted;
-  }
-
-  public void setWasInterrupted(boolean wasInterrupted) {
-    this.wasInterrupted = wasInterrupted;
-  }
-  
-
   public void interrupt(String reason, boolean skipCustomListeners, boolean skipIoMappings) {
-    wasInterrupted = true;
     LOG.interruptingExecution(reason, skipCustomListeners);
     clearScope(reason, skipCustomListeners, skipIoMappings);
   }
@@ -1177,6 +1165,7 @@ public abstract class PvmExecutionImpl extends CoreExecution implements Activity
     ActivityImpl activity = getActivity();
 
     activityInstanceId = generateActivityInstanceId(activity.getId());
+    activityInstanceState = ActivityInstanceState.STARTING.getStateCode();
 
     LOG.debugEnterActivityInstance(this, getParentActivityInstanceId());
 
@@ -1190,6 +1179,14 @@ public abstract class PvmExecutionImpl extends CoreExecution implements Activity
       initializeTimerDeclarations();
     }
 
+  }
+
+  public void activityInstanceStarted() {
+    this.activityInstanceState = ActivityInstanceState.DEFAULT.getStateCode();
+  }
+
+  public void activityInstanceDone() {
+    this.activityInstanceState = ActivityInstanceState.ENDING.getStateCode();
   }
 
   protected abstract String generateActivityInstanceId(String activityId);

@@ -17,8 +17,8 @@ package org.camunda.bpm.engine.test.bpmn.event.conditional;
 
 import java.util.List;
 import java.util.Map;
-import static junit.framework.Assert.assertEquals;
-import static junit.framework.Assert.assertNotNull;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import org.camunda.bpm.engine.delegate.ExecutionListener;
 import org.camunda.bpm.engine.runtime.ProcessInstance;
 import org.camunda.bpm.engine.task.Task;
@@ -27,7 +27,6 @@ import org.camunda.bpm.engine.test.Deployment;
 import static org.camunda.bpm.engine.test.api.runtime.migration.ModifiableBpmnModelInstance.modify;
 import org.junit.Test;
 import org.camunda.bpm.model.bpmn.BpmnModelInstance;
-import static org.camunda.bpm.engine.test.bpmn.event.conditional.AbstractConditionalEventTestCase.CONDITIONAL_VAR_EVENT_UPDATE;
 import org.camunda.bpm.engine.variable.Variables;
 import static org.camunda.bpm.engine.test.bpmn.event.conditional.AbstractConditionalEventTestCase.CONDITIONAL_EVENT_PROCESS_KEY;
 import static org.camunda.bpm.engine.test.bpmn.event.conditional.BoundaryConditionalEventTest.TASK_WITH_CONDITION_ID;
@@ -430,10 +429,10 @@ public class EventSubProcessStartConditionalEventTest extends AbstractConditiona
     taskService.complete(task.getId());
 
     //then input mapping from sub process sets variable
-    //-> interrupting conditional event is triggered
+    //-> interrupting conditional event is not triggered
     task = taskQuery.singleResult();
     assertNotNull(task);
-    assertEquals(TASK_AFTER_CONDITION, task.getName());
+    assertEquals(TASK_IN_SUB_PROCESS, task.getName());
   }
 
   @Test
@@ -463,9 +462,9 @@ public class EventSubProcessStartConditionalEventTest extends AbstractConditiona
     taskService.complete(task.getId());
 
     //then input mapping from sub process sets variable
-    //-> non interrupting conditional event is triggered
+    //-> non interrupting conditional event is not triggered
     List<Task> tasks = taskQuery.list();
-    assertEquals(2, tasks.size());
+    assertEquals(1, tasks.size());
     assertEquals(1, conditionEventSubscriptionQuery.list().size());
   }
 
@@ -493,7 +492,7 @@ public class EventSubProcessStartConditionalEventTest extends AbstractConditiona
     taskService.complete(task.getId());
 
     //then input mapping from sub process sets variable
-    //-> interrupting conditional event is triggered
+    //-> interrupting conditional event is not triggered
     task = taskQuery.singleResult();
     assertNotNull(task);
     assertEquals(TASK_AFTER_CONDITION, task.getName());
@@ -564,7 +563,7 @@ public class EventSubProcessStartConditionalEventTest extends AbstractConditiona
     taskService.complete(task.getId());
 
     //then input mapping from sub process sets variable
-    //-> interrupting conditional event is triggered
+    //-> interrupting conditional event is not triggered
     task = taskQuery.singleResult();
     assertNotNull(task);
     assertEquals(TASK_AFTER_CONDITION, task.getName());
@@ -795,10 +794,9 @@ public class EventSubProcessStartConditionalEventTest extends AbstractConditiona
     taskService.complete(task.getId());
 
     //then start listener sets variable
-    //non interrupting boundary event is triggered
+    //non interrupting boundary event is not triggered
     List<Task> tasks = taskQuery.list();
     assertEquals(2, tasks.size());
-    assertEquals(1, conditionEventSubscriptionQuery.list().size());
   }
 
   @Test

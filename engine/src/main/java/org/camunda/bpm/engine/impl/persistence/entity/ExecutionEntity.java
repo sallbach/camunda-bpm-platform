@@ -67,6 +67,7 @@ import org.camunda.bpm.engine.impl.pvm.delegate.CompositeActivityBehavior;
 import org.camunda.bpm.engine.impl.pvm.process.ActivityImpl;
 import org.camunda.bpm.engine.impl.pvm.process.ProcessDefinitionImpl;
 import org.camunda.bpm.engine.impl.pvm.process.ScopeImpl;
+import org.camunda.bpm.engine.impl.pvm.runtime.ActivityInstanceState;
 import org.camunda.bpm.engine.impl.pvm.runtime.AtomicOperation;
 import org.camunda.bpm.engine.impl.pvm.runtime.ExecutionStartContext;
 import org.camunda.bpm.engine.impl.pvm.runtime.ProcessInstanceStartContext;
@@ -233,7 +234,11 @@ public class ExecutionEntity extends PvmExecutionImpl implements Execution, Proc
 
       String currentActivityInstanceId = getActivityInstanceId(targetScope);
       final String lastActivityInstanceId = activityInstanceIds.get(targetScope);
-      if (lastActivityInstanceId != null && lastActivityInstanceId.equals(currentActivityInstanceId) && !targetScope.isEnded()) {
+      ActivityImpl targetActivity = targetScope.getActivity();
+      if (lastActivityInstanceId != null && lastActivityInstanceId.equals(currentActivityInstanceId) &&
+          (targetScope.getActivityId() == null
+            || !targetActivity.isScope()
+            || (targetActivity.isScope() && targetScope.isInState(ActivityInstanceState.DEFAULT)))) {
         targetScope.dispatchEvent(event.getEvent());
       }
     }

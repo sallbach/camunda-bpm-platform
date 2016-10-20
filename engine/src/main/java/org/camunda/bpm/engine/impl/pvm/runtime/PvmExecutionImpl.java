@@ -681,6 +681,8 @@ public abstract class PvmExecutionImpl extends CoreExecution implements Activity
     this.replacedBy = null;
     execution.replacedBy = this;
 
+    this.transitionsToTake = execution.transitionsToTake;
+
     execution.leaveActivityInstance();
   }
 
@@ -1709,6 +1711,10 @@ public abstract class PvmExecutionImpl extends CoreExecution implements Activity
 
   public int getActivityInstanceState() {
     return activityInstanceState;
+  }
+
+  public boolean isInState(ActivityInstanceState state) {
+    return activityInstanceState == state.getStateCode();
   }
 
   public boolean isEventScope() {

@@ -15,9 +15,9 @@
  */
 package org.camunda.bpm.engine.test.bpmn.event.conditional;
 
-import static junit.framework.Assert.assertEquals;
-import static junit.framework.Assert.assertNotNull;
-import static junit.framework.Assert.assertNull;
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.camunda.bpm.engine.test.api.runtime.migration.ModifiableBpmnModelInstance.modify;
 import static org.camunda.bpm.engine.test.bpmn.event.conditional.EventSubProcessStartConditionalEventTest.TASK_AFTER_SERVICE_TASK;
 
@@ -539,12 +539,8 @@ public class BoundaryConditionalEventTest extends AbstractConditionalEventTestCa
     //when task is completed
     taskService.complete(task.getId());
 
-    //then service task with delegated code is called and variable is set
-    //-> conditional event is triggered and execution stays is user task after condition
-    task = taskQuery.singleResult();
-    assertNotNull(task);
-    assertEquals(TASK_AFTER_CONDITION, task.getName());
-    assertEquals(0, conditionEventSubscriptionQuery.list().size());
+    // input mapping does not trigger boundary event and process ends regularly
+    assertEquals(0, engine.getRuntimeService().createProcessInstanceQuery().count());
   }
 
 
@@ -555,7 +551,7 @@ public class BoundaryConditionalEventTest extends AbstractConditionalEventTestCa
                                                   .serviceTask(TASK_WITH_CONDITION_ID)
                                                     .camundaInputParameter(VARIABLE_NAME, "1")
                                                     .camundaExpression(TRUE_CONDITION)
-                                                  .userTask()
+                                                  .userTask("afterServiceTask")
                                                   .endEvent().done();
     deployBoundaryEventProcessWithVariableIsSetInDelegationCode(modelInstance, false);
 
@@ -570,11 +566,11 @@ public class BoundaryConditionalEventTest extends AbstractConditionalEventTestCa
     //when task before service task is completed
     taskService.complete(task.getId());
 
-    //then service task with delegated code is called and variable is set
-    //-> non interrupting conditional event is triggered
-    //execution stays at user task after condition and after service task
+    // then the variable is set in an input mapping
+    // -> non interrupting conditional event is not triggered
     List<Task> tasks = taskQuery.list();
-    assertEquals(2, tasks.size());
+    assertEquals(1, tasks.size());
+    assertEquals("afterServiceTask", tasks.get(0).getTaskDefinitionKey());
   }
 
 
@@ -659,11 +655,11 @@ public class BoundaryConditionalEventTest extends AbstractConditionalEventTestCa
     //when task is completed
     taskService.complete(task.getId());
 
-    //then input mapping from sub process sets variable
-    //-> interrupting conditional event is triggered
+    // Then input mapping from sub process sets variable, but
+    // interrupting conditional event is not triggered
     task = taskQuery.singleResult();
     assertNotNull(task);
-    assertEquals(TASK_AFTER_CONDITION, task.getName());
+    assertEquals(TASK_IN_SUB_PROCESS, task.getName());
   }
 
   @Test
@@ -695,7 +691,8 @@ public class BoundaryConditionalEventTest extends AbstractConditionalEventTestCa
     //then input mapping from sub process sets variable
     //-> non interrupting conditional event is triggered
     List<Task> tasks = taskQuery.list();
-    assertEquals(2, tasks.size());
+    assertEquals(1, tasks.size());
+    assertEquals(TASK_IN_SUB_PROCESS, tasks.get(0).getName());
     assertEquals(1, conditionEventSubscriptionQuery.list().size());
   }
 
@@ -903,7 +900,7 @@ public class BoundaryConditionalEventTest extends AbstractConditionalEventTestCa
     //-> non interrupting conditional event is not triggered
     List<Task> tasks = taskQuery.list();
     assertEquals(1, tasks.size());
-    assertEquals("afterOutputMapping", tasks.get(0).getTaskDefinitionKey());
+    assertEquals("afterOutputMapping", tasks.get(0).getName());
   }
 
   @Test

@@ -34,7 +34,6 @@ import static org.camunda.bpm.engine.test.bpmn.event.conditional.BoundaryConditi
 import org.camunda.bpm.model.bpmn.Bpmn;
 import org.camunda.bpm.model.bpmn.instance.SequenceFlow;
 import org.camunda.bpm.model.bpmn.instance.camunda.CamundaExecutionListener;
-import org.junit.Ignore;
 
 /**
  *
@@ -212,6 +211,7 @@ public class EventSubProcessStartConditionalEventTest extends AbstractConditiona
 
     final BpmnModelInstance modelInstance = modify(model)
             .addSubProcessTo(parentId)
+            .id("eventSubProcess")
             .triggerByEvent()
             .embeddedSubProcess()
             .startEvent()
@@ -219,7 +219,7 @@ public class EventSubProcessStartConditionalEventTest extends AbstractConditiona
             .conditionalEventDefinition(CONDITIONAL_EVENT)
             .condition(CONDITION_EXPR)
             .conditionalEventDefinitionDone()
-            .userTask()
+            .userTask("taskAfterCond")
             .name(TASK_AFTER_CONDITION)
             .endEvent().done();
 
@@ -444,7 +444,7 @@ public class EventSubProcessStartConditionalEventTest extends AbstractConditiona
                                                     .camundaInputParameter(VARIABLE_NAME, "1")
                                                     .embeddedSubProcess()
                                                     .startEvent()
-                                                    .userTask().name(TASK_IN_SUB_PROCESS)
+                                                    .userTask("taskinSubprocess").name(TASK_IN_SUB_PROCESS)
                                                     .endEvent()
                                                   .subProcessDone()
                                                   .endEvent()

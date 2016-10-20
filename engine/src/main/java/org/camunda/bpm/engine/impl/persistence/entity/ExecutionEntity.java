@@ -165,7 +165,6 @@ public class ExecutionEntity extends PvmExecutionImpl implements Execution, Proc
       new VariableStore<VariableInstanceEntity>(this, new ExecutionEntityReferencer(this));
 
   protected List<DelayedVariableEvent> delayedEvents = new ArrayList<DelayedVariableEvent>();
-  protected PvmAtomicOperationContinuation continuation;
 
   public void delayEvent(ExecutionEntity targetScope, VariableEvent variableEvent) {
     DelayedVariableEvent delayedEvent = new DelayedVariableEvent(targetScope, variableEvent);
@@ -181,12 +180,6 @@ public class ExecutionEntity extends PvmExecutionImpl implements Execution, Proc
     delayedEvents.clear();
   }
 
-  public PvmAtomicOperationContinuation popContinuation() {
-    PvmAtomicOperationContinuation op = continuation;
-    continuation = null;
-    return op;
-  }
-
   public void dispatchDelayedEventsAndPerformOperation(final PvmAtomicOperation atomicOperation) {
     dispatchDelayedEventsAndPerformOperation(new PvmAtomicOperationContinuation() {
 
@@ -198,8 +191,68 @@ public class ExecutionEntity extends PvmExecutionImpl implements Execution, Proc
   }
 
   public void dispatchDelayedEventsAndPerformOperation(PvmAtomicOperationContinuation continuation) {
-    this.continuation = continuation;
-    performOperationSync(PvmAtomicOperation.DISPATCH_EVENTS);
+    ExecutionEntity executionEntity = this;
+
+    String activityInstanceId = getActivityInstanceId(executionEntity);
+
+    dispatchScopeEvents(executionEntity);
+
+    executionEntity = executionEntity.getReplacedBy() != null ? executionEntity.getReplacedBy() : executionEntity;
+    String currentActivityInstanceId = getActivityInstanceId(executionEntity);
+
+    if (continuation != null && activityInstanceId.equals(currentActivityInstanceId) && !executionEntity.isCanceled()) {
+      continuation.execute(executionEntity);
+    }
+  }
+
+  protected void dispatchScopeEvents(ExecutionEntity execution) {
+    ExecutionEntity scopeExecution = (ExecutionEntity) (execution.isScope() ? execution : execution.getParent());
+
+    List<DelayedVariableEvent> delayedEvents = new ArrayList<DelayedVariableEvent>(scopeExecution.getDelayedEvents());
+    scopeExecution.clearDelayedEvents();
+
+    Map<ExecutionEntity, String> activityInstanceIds = new HashMap<ExecutionEntity, String>();
+
+    for (DelayedVariableEvent event : delayedEvents) {
+      ExecutionEntity targetScope = event.getTargetScope();
+
+      String targetScopeActivityInstanceId = getActivityInstanceId(targetScope);
+      activityInstanceIds.put(targetScope, targetScopeActivityInstanceId);
+
+    }
+
+    for (DelayedVariableEvent event : delayedEvents) {
+
+      ExecutionEntity targetScope = event.getTargetScope();
+      ExecutionEntity replacedBy = targetScope.getReplacedBy();
+
+      // if tree compacted
+      if (replacedBy != null && targetScope.getParent() == replacedBy) {
+        targetScope = replacedBy;
+      }
+
+      String currentActivityInstanceId = getActivityInstanceId(targetScope);
+      final String lastActivityInstanceId = activityInstanceIds.get(targetScope);
+      if (lastActivityInstanceId != null && lastActivityInstanceId.equals(currentActivityInstanceId) && !targetScope.isEnded()) {
+        targetScope.dispatchEvent(event.getEvent());
+      }
+    }
+  }
+
+  private String getActivityInstanceId(ExecutionEntity targetScope) {
+    if (targetScope.isConcurrent()) {
+      return targetScope.getActivityInstanceId();
+    } else {
+      ActivityImpl targetActivity = targetScope.getActivity();
+      if (targetActivity != null && targetActivity.getActivities().isEmpty()) {
+        // TODO: does not always work with a compacted tree, i.e. where targetScope is
+        // in a non-scope activity, because we have to consider if the variable was set in the context
+        // of that non-scope activity, or in the context of the containing scope
+        return targetScope.getActivityInstanceId();
+      } else {
+        return targetScope.getParentActivityInstanceId();
+      }
+    }
   }
 
   // replaced by //////////////////////////////////////////////////////////////

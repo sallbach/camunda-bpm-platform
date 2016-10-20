@@ -50,7 +50,7 @@ public abstract class AbstractVariableCmd implements Command<Void>, Serializable
     executeOperation(scope);
 
     ExecutionEntity contextExecution = getContextExecution();
-    if (contextExecution != null && !contextExecution.isSuspended()) {
+    if (contextExecution != null) {
       contextExecution.dispatchDelayedEventsAndPerformOperation((PvmAtomicOperationContinuation) null);
     }
 

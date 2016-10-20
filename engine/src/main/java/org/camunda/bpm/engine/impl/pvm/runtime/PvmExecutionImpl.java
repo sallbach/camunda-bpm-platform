@@ -303,7 +303,19 @@ public abstract class PvmExecutionImpl extends CoreExecution implements Activity
     interrupt(reason, false, false);
   }
 
+  protected boolean wasInterrupted;
+
+  public boolean wasInterrupted() {
+    return wasInterrupted;
+  }
+
+  public void setWasInterrupted(boolean wasInterrupted) {
+    this.wasInterrupted = wasInterrupted;
+  }
+  
+
   public void interrupt(String reason, boolean skipCustomListeners, boolean skipIoMappings) {
+    wasInterrupted = true;
     LOG.interruptingExecution(reason, skipCustomListeners);
     clearScope(reason, skipCustomListeners, skipIoMappings);
   }

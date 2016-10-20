@@ -25,7 +25,6 @@ import java.util.List;
 import java.util.Map;
 
 import org.camunda.bpm.engine.delegate.ExecutionListener;
-import org.camunda.bpm.engine.runtime.ActivityInstance;
 import org.camunda.bpm.engine.runtime.Execution;
 import org.camunda.bpm.engine.runtime.ProcessInstance;
 import org.camunda.bpm.engine.task.Task;
@@ -1153,7 +1152,7 @@ public class BoundaryConditionalEventTest extends AbstractConditionalEventTestCa
     //then start listener sets variable
     //non interrupting boundary event is triggered
     List<Task> tasks = taskQuery.list();
-    assertEquals(2, tasks.size());
+    assertEquals(6, tasks.size());
     assertEquals(1, conditionEventSubscriptionQuery.list().size());
   }
 

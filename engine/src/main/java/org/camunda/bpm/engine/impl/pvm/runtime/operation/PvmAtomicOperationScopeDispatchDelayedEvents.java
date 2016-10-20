@@ -17,10 +17,8 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import org.camunda.bpm.engine.ProcessEngineException;
 import org.camunda.bpm.engine.impl.persistence.entity.DelayedVariableEvent;
 import org.camunda.bpm.engine.impl.persistence.entity.ExecutionEntity;
-import org.camunda.bpm.engine.impl.persistence.entity.VariableInstanceEntity;
 import org.camunda.bpm.engine.impl.pvm.process.ActivityImpl;
 import org.camunda.bpm.engine.impl.pvm.runtime.PvmExecutionImpl;
 
@@ -74,8 +72,8 @@ public class PvmAtomicOperationScopeDispatchDelayedEvents implements PvmAtomicOp
       }
 
       String currentActivityInstanceId = getActivityInstanceId(targetScope);
-
-      if (activityInstanceIds.get(targetScope).equals(currentActivityInstanceId) && !targetScope.isEnded()) {
+      final String lastActivityInstanceId = activityInstanceIds.get(targetScope);
+      if (lastActivityInstanceId != null && lastActivityInstanceId.equals(currentActivityInstanceId) && !targetScope.isEnded()) {
         targetScope.dispatchEvent(event.getEvent());
       }
     }

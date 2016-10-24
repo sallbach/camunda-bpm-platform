@@ -34,7 +34,7 @@ public class PvmAtomicOperationTransitionNotifyListenerEnd extends PvmAtomicOper
   @Override
   protected void eventNotificationsCompleted(PvmExecutionImpl execution) {
 
-    ((ExecutionEntity) execution).dispatchDelayedEventsAndPerformOperation(new PvmAtomicOperationContinuation() {
+    execution.dispatchDelayedEventsAndPerformOperation(new PvmAtomicOperationContinuation() {
 
       @Override
       public void execute(PvmExecutionImpl execution) {

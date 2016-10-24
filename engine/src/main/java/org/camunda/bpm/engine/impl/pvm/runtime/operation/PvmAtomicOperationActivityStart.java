@@ -33,10 +33,10 @@ public class PvmAtomicOperationActivityStart extends PvmAtomicOperationActivityI
     if (executionStartContext != null) {
       executionStartContext.executionStarted(execution);
       execution.disposeExecutionStartContext();
-  }
+    }
 
-    // TODO: remove cast
-    ((ExecutionEntity) execution).dispatchDelayedEventsAndPerformOperation(ACTIVITY_EXECUTE);
+
+    execution.dispatchDelayedEventsAndPerformOperation(ACTIVITY_EXECUTE);
   }
 
   protected String getEventName() {

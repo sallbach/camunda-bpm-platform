@@ -13,22 +13,24 @@
 package org.camunda.bpm.engine.impl.persistence.entity;
 
 import org.camunda.bpm.engine.impl.core.variable.event.VariableEvent;
+import org.camunda.bpm.engine.impl.pvm.runtime.PvmExecutionImpl;
 
 /**
- * @author Thorben Lindhauer
  *
+ * @author Thorben Lindhauer
+ * @author Christopher Zell
  */
 public class DelayedVariableEvent {
 
-  protected ExecutionEntity targetScope;
+  protected PvmExecutionImpl targetScope;
   protected VariableEvent event;
 
-  public DelayedVariableEvent(ExecutionEntity targetScope, VariableEvent event) {
+  public DelayedVariableEvent(PvmExecutionImpl targetScope, VariableEvent event) {
     this.targetScope = targetScope;
     this.event = event;
   }
 
-  public ExecutionEntity getTargetScope() {
+  public PvmExecutionImpl getTargetScope() {
     return targetScope;
   }
 

@@ -40,7 +40,7 @@ public class PvmAtomicOperationTransitionNotifyListenerStart extends PvmAtomicOp
 
     TransitionImpl transition = execution.getTransition();
     PvmActivity destination;
-    if(transition == null) { // this is null after async cont. -> transition is not stored in execution
+    if (transition == null) { // this is null after async cont. -> transition is not stored in execution
       destination = execution.getActivity();
     } else {
       destination = transition.getDestination();
@@ -54,7 +54,7 @@ public class PvmAtomicOperationTransitionNotifyListenerStart extends PvmAtomicOp
       execution.disposeExecutionStartContext();
     }
 
-    ((ExecutionEntity) execution).dispatchDelayedEventsAndPerformOperation(ACTIVITY_EXECUTE);
+    execution.dispatchDelayedEventsAndPerformOperation(ACTIVITY_EXECUTE);
   }
 
   public String getCanonicalName() {

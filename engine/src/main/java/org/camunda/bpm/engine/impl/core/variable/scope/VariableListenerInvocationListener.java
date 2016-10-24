@@ -33,7 +33,6 @@ public class VariableListenerInvocationListener implements VariableInstanceLifec
 
   @Override
   public void onCreate(VariableInstanceEntity variable, AbstractVariableScope sourceScope) {
-
     handleEvent(new VariableEvent(variable, VariableListener.CREATE, sourceScope));
   }
 
@@ -62,6 +61,7 @@ public class VariableListenerInvocationListener implements VariableInstanceLifec
       throw new ProcessEngineException("BPMN execution scope expected");
     }
   }
+
   protected void addEventToScopeExecution(ExecutionEntity sourceScope, VariableEvent event) {
 
     // ignore events of variables that are not set in an execution

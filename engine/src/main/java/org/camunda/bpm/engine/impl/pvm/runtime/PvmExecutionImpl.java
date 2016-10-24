@@ -1796,9 +1796,7 @@ public abstract class PvmExecutionImpl extends CoreExecution implements Activity
     }
   }
 
-
-
-  protected List<DelayedVariableEvent> delayedEvents = new ArrayList<DelayedVariableEvent>();
+  protected transient List<DelayedVariableEvent> delayedEvents = new ArrayList<DelayedVariableEvent>();
 
   public void delayEvent(PvmExecutionImpl targetScope, VariableEvent variableEvent) {
     DelayedVariableEvent delayedEvent = new DelayedVariableEvent(targetScope, variableEvent);
@@ -1876,8 +1874,6 @@ public abstract class PvmExecutionImpl extends CoreExecution implements Activity
       }
     }
   }
-
-
 
   private String getActivityInstanceId(PvmExecutionImpl targetScope) {
     if (targetScope.isConcurrent()) {

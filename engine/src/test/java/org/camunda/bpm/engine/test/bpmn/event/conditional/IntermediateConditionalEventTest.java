@@ -36,6 +36,11 @@ import org.camunda.bpm.model.bpmn.BpmnModelInstance;
  */
 public class IntermediateConditionalEventTest extends AbstractConditionalEventTestCase {
 
+  @Override
+  public void checkIfProcessCanBeFinished() {
+    //override since check is not needed in intermediate test suite
+  }
+
   @Test
   @Deployment
   public void testFalseCondition() {
@@ -288,6 +293,11 @@ public class IntermediateConditionalEventTest extends AbstractConditionalEventTe
     assertNotNull(task);
     assertEquals(TASK_AFTER_CONDITION, task.getName());
     assertEquals(0, conditionEventSubscriptionQuery.list().size());
+
+    //and task can be completed which ends process instance
+    taskService.complete(task.getId());
+    assertNull(taskService.createTaskQuery().singleResult());
+    assertNull(runtimeService.createProcessInstanceQuery().singleResult());
   }
 
   @Test
@@ -335,6 +345,11 @@ public class IntermediateConditionalEventTest extends AbstractConditionalEventTe
     Task task = taskQuery.singleResult();
     assertEquals(TASK_AFTER_CONDITION, task.getName());
     assertEquals(0, conditionEventSubscriptionQuery.list().size());
+
+    //and task can be completed which ends process instance
+    taskService.complete(task.getId());
+    assertNull(taskService.createTaskQuery().singleResult());
+    assertNull(runtimeService.createProcessInstanceQuery().singleResult());
   }
 
   @Test
@@ -385,6 +400,11 @@ public class IntermediateConditionalEventTest extends AbstractConditionalEventTe
     Task task = taskQuery.singleResult();
     assertEquals(TASK_AFTER_CONDITION, task.getName());
     assertEquals(0, conditionEventSubscriptionQuery.list().size());
+
+    //and task can be completed which ends process instance
+    taskService.complete(task.getId());
+    assertNull(taskService.createTaskQuery().singleResult());
+    assertNull(runtimeService.createProcessInstanceQuery().singleResult());
   }
 
 
@@ -434,5 +454,10 @@ public class IntermediateConditionalEventTest extends AbstractConditionalEventTe
     Task task = taskQuery.singleResult();
     assertEquals(TASK_AFTER_CONDITION, task.getName());
     assertEquals(0, conditionEventSubscriptionQuery.list().size());
+
+    //and task can be completed which ends process instance
+    taskService.complete(task.getId());
+    assertNull(taskService.createTaskQuery().singleResult());
+    assertNull(runtimeService.createProcessInstanceQuery().singleResult());
   }
 }

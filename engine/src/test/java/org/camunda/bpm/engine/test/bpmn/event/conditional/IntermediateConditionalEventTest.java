@@ -17,6 +17,8 @@ package org.camunda.bpm.engine.test.bpmn.event.conditional;
 
 import java.util.Map;
 import static junit.framework.Assert.assertEquals;
+
+import org.camunda.bpm.engine.SuspendedEntityInteractionException;
 import org.camunda.bpm.engine.runtime.Execution;
 import org.camunda.bpm.engine.runtime.ProcessInstance;
 import org.camunda.bpm.engine.task.Task;
@@ -27,6 +29,9 @@ import org.junit.Test;
 import static junit.framework.Assert.assertNotNull;
 import static junit.framework.Assert.assertNull;
 import static org.camunda.bpm.engine.test.bpmn.event.conditional.AbstractConditionalEventTestCase.CONDITIONAL_EVENT_PROCESS_KEY;
+import static org.junit.Assert.assertTrue;
+import static org.junit.Assert.fail;
+
 import org.camunda.bpm.model.bpmn.Bpmn;
 import org.camunda.bpm.model.bpmn.BpmnModelInstance;
 
@@ -460,4 +465,39 @@ public class IntermediateConditionalEventTest extends AbstractConditionalEventTe
     assertNull(taskService.createTaskQuery().singleResult());
     assertNull(runtimeService.createProcessInstanceQuery().singleResult());
   }
+
+  @Test
+  public void testSuspendedProcess() {
+
+    final BpmnModelInstance modelInstance = Bpmn.createExecutableProcess(CONDITIONAL_EVENT_PROCESS_KEY)
+      .startEvent()
+      .intermediateCatchEvent(CONDITIONAL_EVENT)
+        .conditionalEventDefinition()
+          .condition(CONDITION_EXPR)
+        .conditionalEventDefinitionDone()
+      .endEvent().done();
+
+    engine.manageDeployment(repositoryService.createDeployment().addModelInstance(CONDITIONAL_MODEL, modelInstance).deploy());
+    // given suspended process
+    ProcessInstance procInst = runtimeService.startProcessInstanceByKey(CONDITIONAL_EVENT_PROCESS_KEY);
+    runtimeService.suspendProcessInstanceById(procInst.getId());
+
+    //when wrong variable is set
+    runtimeService.setVariable(procInst.getId(), VARIABLE_NAME+1, 1);
+
+    //then nothing happens
+    assertTrue(runtimeService.createProcessInstanceQuery().singleResult().isSuspended());
+
+    //when variable which triggers condition is set
+    //then exception is expected
+    try {
+      runtimeService.setVariable(procInst.getId(), VARIABLE_NAME, 1);
+      fail("Should fail!");
+    } catch (SuspendedEntityInteractionException seie) {
+      //expected
+    }
+    runtimeService.activateProcessInstanceById(procInst.getId());
+    tasksAfterVariableIsSet = taskService.createTaskQuery().list();
+  }
+
 }

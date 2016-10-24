@@ -17,6 +17,7 @@ package org.camunda.bpm.engine.test.bpmn.event.conditional;
 
 import java.util.Map;
 
+import org.camunda.bpm.engine.SuspendedEntityInteractionException;
 import org.camunda.bpm.engine.delegate.ExecutionListener;
 import org.camunda.bpm.engine.runtime.ProcessInstance;
 import org.camunda.bpm.engine.task.Task;
@@ -1177,7 +1178,6 @@ public class EventSubProcessStartConditionalEventTest extends AbstractConditiona
     assertEquals(1, conditionEventSubscriptionQuery.list().size());
   }
 
-
   protected void deployEventSubProcessWithVarName(boolean interrupting) {
     final BpmnModelInstance modelInstance = modify(TASK_MODEL)
             .addSubProcessTo(CONDITIONAL_EVENT_PROCESS_KEY)
@@ -1234,5 +1234,70 @@ public class EventSubProcessStartConditionalEventTest extends AbstractConditiona
             .done();
 
     engine.manageDeployment(repositoryService.createDeployment().addModelInstance(CONDITIONAL_MODEL, modelInstance).deploy());
+  }
+
+  @Test
+  public void testSuspendedProcess() {
+
+    final BpmnModelInstance modelInstance = Bpmn.createExecutableProcess(CONDITIONAL_EVENT_PROCESS_KEY)
+      .startEvent()
+      .userTask(TASK_WITH_CONDITION_ID)
+      .endEvent().done();
+
+    deployEventSubProcessWithVariableIsSetInDelegationCode(modelInstance, true);
+
+    // given suspended process
+    ProcessInstance procInst = runtimeService.startProcessInstanceByKey(CONDITIONAL_EVENT_PROCESS_KEY);
+    runtimeService.suspendProcessInstanceById(procInst.getId());
+
+    //when wrong variable is set
+    runtimeService.setVariable(procInst.getId(), VARIABLE_NAME+1, 1);
+
+    //then nothing happens
+    assertTrue(runtimeService.createProcessInstanceQuery().singleResult().isSuspended());
+
+    //when variable which triggers condition is set
+    //then exception is expected
+    try {
+      runtimeService.setVariable(procInst.getId(), VARIABLE_NAME, 1);
+      fail("Should fail!");
+    } catch (SuspendedEntityInteractionException seie) {
+      //expected
+    }
+    runtimeService.activateProcessInstanceById(procInst.getId());
+    tasksAfterVariableIsSet = taskService.createTaskQuery().list();
+  }
+
+  @Test
+  public void testNonInterruptingConditionalSuspendedProcess() {
+
+    final BpmnModelInstance modelInstance = Bpmn.createExecutableProcess(CONDITIONAL_EVENT_PROCESS_KEY)
+      .startEvent()
+      .userTask(TASK_WITH_CONDITION_ID)
+      .endEvent().done();
+
+
+    deployEventSubProcessWithVariableIsSetInDelegationCode(modelInstance, false);
+
+    // given suspended process
+    ProcessInstance procInst = runtimeService.startProcessInstanceByKey(CONDITIONAL_EVENT_PROCESS_KEY);
+    runtimeService.suspendProcessInstanceById(procInst.getId());
+
+    //when wrong variable is set
+    runtimeService.setVariable(procInst.getId(), VARIABLE_NAME+1, 1);
+
+    //then nothing happens
+    assertTrue(runtimeService.createProcessInstanceQuery().singleResult().isSuspended());
+
+    //when variable which triggers condition is set
+    //then exception is expected
+    try {
+      runtimeService.setVariable(procInst.getId(), VARIABLE_NAME, 1);
+      fail("Should fail!");
+    } catch (SuspendedEntityInteractionException seie) {
+      //expected
+    }
+    runtimeService.activateProcessInstanceById(procInst.getId());
+    tasksAfterVariableIsSet = taskService.createTaskQuery().list();
   }
 }

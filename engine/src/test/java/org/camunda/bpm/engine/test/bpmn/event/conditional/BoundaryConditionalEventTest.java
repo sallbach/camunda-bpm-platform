@@ -15,15 +15,6 @@
  */
 package org.camunda.bpm.engine.test.bpmn.event.conditional;
 
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNotNull;
-import static org.junit.Assert.assertNull;
-import static org.camunda.bpm.engine.test.api.runtime.migration.ModifiableBpmnModelInstance.modify;
-import static org.camunda.bpm.engine.test.bpmn.event.conditional.EventSubProcessStartConditionalEventTest.TASK_AFTER_SERVICE_TASK;
-
-import java.util.List;
-import java.util.Map;
-
 import org.camunda.bpm.engine.delegate.ExecutionListener;
 import org.camunda.bpm.engine.runtime.Execution;
 import org.camunda.bpm.engine.runtime.ProcessInstance;
@@ -39,6 +30,13 @@ import org.camunda.bpm.model.bpmn.instance.camunda.CamundaExecutionListener;
 import org.junit.Assert;
 import org.junit.Test;
 
+import java.util.List;
+import java.util.Map;
+
+import static org.camunda.bpm.engine.test.api.runtime.migration.ModifiableBpmnModelInstance.modify;
+import static org.camunda.bpm.engine.test.bpmn.event.conditional.EventSubProcessStartConditionalEventTest.TASK_AFTER_SERVICE_TASK;
+import static org.junit.Assert.*;
+
 /**
  *
  * @author Christopher Zell <christopher.zell@camunda.com>
@@ -48,6 +46,8 @@ public class BoundaryConditionalEventTest extends AbstractConditionalEventTestCa
   protected static final String TASK_WITH_CONDITION = "Task with condition";
   protected static final String TASK_WITH_CONDITION_ID = "taskWithCondition";
   protected static final String TASK_IN_SUBPROCESS = "Task in Subprocess";
+  protected static final String AFTER_TASK_ID = "afterTask";
+  public static final String AFTER_TASK = "After Task";
 
   // TODO: test process instance can complete successfully
 
@@ -1038,13 +1038,13 @@ public class BoundaryConditionalEventTest extends AbstractConditionalEventTestCa
   public void testSetVariableInEndListener() {
     final BpmnModelInstance modelInstance = Bpmn.createExecutableProcess(CONDITIONAL_EVENT_PROCESS_KEY)
                                                   .startEvent()
-                                                  .userTask(TASK_BEFORE_CONDITION_ID)
-                                                    .name(TASK_BEFORE_CONDITION)
-                                                    .camundaExecutionListenerExpression(ExecutionListener.EVENTNAME_END, EXPR_SET_VARIABLE)
                                                   .userTask(TASK_WITH_CONDITION_ID)
+                                                    .name(TASK_WITH_CONDITION)
+                                                    .camundaExecutionListenerExpression(ExecutionListener.EVENTNAME_END, EXPR_SET_VARIABLE)
+                                                  .userTask().name(AFTER_TASK)
                                                   .endEvent()
                                                   .done();
-    deployBoundaryEventProcess(modify(modelInstance).activityBuilder(TASK_BEFORE_CONDITION_ID), true);
+    deployBoundaryEventProcess(modify(modelInstance).activityBuilder(TASK_WITH_CONDITION_ID), true);
 
     // given
     ProcessInstance procInst = runtimeService.startProcessInstanceByKey(CONDITIONAL_EVENT_PROCESS_KEY);
@@ -1052,29 +1052,29 @@ public class BoundaryConditionalEventTest extends AbstractConditionalEventTestCa
     TaskQuery taskQuery = taskService.createTaskQuery().processInstanceId(procInst.getId());
     Task task = taskQuery.singleResult();
     assertNotNull(task);
-    assertEquals(TASK_BEFORE_CONDITION, task.getName());
+    assertEquals(TASK_WITH_CONDITION, task.getName());
 
     //when task is completed
     taskService.complete(task.getId());
 
-    //then start listener sets variable
-    //conditional event is triggered
+    //then end listener sets variable
+    //conditional event is not triggered
     task = taskQuery.singleResult();
     assertNotNull(task);
-    assertEquals(TASK_AFTER_CONDITION, task.getName());
+    assertEquals(AFTER_TASK, task.getName());
   }
 
   @Test
   public void testNonInterruptingSetVariableInEndListener() {
     final BpmnModelInstance modelInstance = Bpmn.createExecutableProcess(CONDITIONAL_EVENT_PROCESS_KEY)
-                                                  .startEvent()
-                                                  .userTask(TASK_BEFORE_CONDITION_ID)
-                                                    .name(TASK_BEFORE_CONDITION)
-                                                    .camundaExecutionListenerExpression(ExecutionListener.EVENTNAME_END, EXPR_SET_VARIABLE)
-                                                  .userTask(TASK_WITH_CONDITION_ID)
-                                                  .endEvent()
-                                                  .done();
-    deployBoundaryEventProcess(modify(modelInstance).activityBuilder(TASK_BEFORE_CONDITION_ID), false);
+                                                .startEvent()
+                                                .userTask(TASK_WITH_CONDITION_ID)
+                                                  .name(TASK_WITH_CONDITION)
+                                                  .camundaExecutionListenerExpression(ExecutionListener.EVENTNAME_END, EXPR_SET_VARIABLE)
+                                                .userTask().name(AFTER_TASK)
+                                                .endEvent()
+                                                .done();
+    deployBoundaryEventProcess(modify(modelInstance).activityBuilder(TASK_WITH_CONDITION_ID), false);
 
     // given
     ProcessInstance procInst = runtimeService.startProcessInstanceByKey(CONDITIONAL_EVENT_PROCESS_KEY);
@@ -1082,16 +1082,16 @@ public class BoundaryConditionalEventTest extends AbstractConditionalEventTestCa
     TaskQuery taskQuery = taskService.createTaskQuery().processInstanceId(procInst.getId());
     Task task = taskQuery.singleResult();
     assertNotNull(task);
-    assertEquals(TASK_BEFORE_CONDITION, task.getName());
+    assertEquals(TASK_WITH_CONDITION, task.getName());
 
     //when task is completed
     taskService.complete(task.getId());
 
-    //then start listener sets variable
-    //non interrupting boundary event is triggered
-    List<Task> tasks = taskQuery.list();
-    assertEquals(1, tasks.size()); // TODO: end listener should not be able to trigger boundary event
-    assertEquals(TASK_WITH_CONDITION_ID, tasks.get(0).getTaskDefinitionKey());
+    //then end listener sets variable
+    //non interrupting boundary event is not triggered
+    task = taskQuery.singleResult();
+    assertNotNull(task);
+    assertEquals(AFTER_TASK, task.getName());
   }
 
   @Test
@@ -1544,7 +1544,7 @@ public class BoundaryConditionalEventTest extends AbstractConditionalEventTestCa
     //then condition will be evaluated, since the execution of the user task still exists (expected behavior)
     task = taskQuery.singleResult();
     assertNotNull(task);
-    assertEquals(TASK_AFTER_CONDITION, task.getName());
+    assertEquals(AFTER_TASK, task.getName());
 
     //and subscriptions are cleaned up
     assertEquals(0, conditionEventSubscriptionQuery.list().size());

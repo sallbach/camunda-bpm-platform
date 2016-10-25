@@ -16,7 +16,7 @@
 package org.camunda.bpm.engine.test.bpmn.event.conditional;
 
 import java.util.Map;
-import static junit.framework.Assert.assertEquals;
+import static org.junit.Assert.assertEquals;
 
 import org.camunda.bpm.engine.SuspendedEntityInteractionException;
 import org.camunda.bpm.engine.runtime.Execution;
@@ -26,9 +26,8 @@ import org.camunda.bpm.engine.task.TaskQuery;
 import org.camunda.bpm.engine.test.Deployment;
 import org.camunda.bpm.engine.variable.Variables;
 import org.junit.Test;
-import static junit.framework.Assert.assertNotNull;
-import static junit.framework.Assert.assertNull;
-import static org.camunda.bpm.engine.test.bpmn.event.conditional.AbstractConditionalEventTestCase.CONDITIONAL_EVENT_PROCESS_KEY;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertNull;
 import static org.junit.Assert.assertTrue;
 import static org.junit.Assert.fail;
 

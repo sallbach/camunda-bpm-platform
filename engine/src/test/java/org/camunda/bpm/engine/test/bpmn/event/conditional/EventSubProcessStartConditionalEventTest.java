@@ -41,7 +41,6 @@ import org.camunda.bpm.model.bpmn.instance.camunda.CamundaExecutionListener;
  */
 public class EventSubProcessStartConditionalEventTest extends AbstractConditionalEventTestCase {
 
-
   @Test
   @Deployment
   public void testTrueCondition() {
@@ -692,6 +691,74 @@ public class EventSubProcessStartConditionalEventTest extends AbstractConditiona
                                                   .userTask()
                                                   .endEvent()
                                                   .done();
+    CamundaExecutionListener listener = modelInstance.newInstance(CamundaExecutionListener.class);
+    listener.setCamundaEvent(ExecutionListener.EVENTNAME_TAKE);
+    listener.setCamundaExpression(EXPR_SET_VARIABLE);
+    modelInstance.<SequenceFlow>getModelElementById(FLOW_ID).builder().addExtensionElement(listener);
+    deployEventSubProcessWithVariableIsSetInDelegationCode(modelInstance, false);
+
+    // given
+    ProcessInstance procInst = runtimeService.startProcessInstanceByKey(CONDITIONAL_EVENT_PROCESS_KEY);
+
+    TaskQuery taskQuery = taskService.createTaskQuery().processInstanceId(procInst.getId());
+    Task task = taskQuery.singleResult();
+    assertNotNull(task);
+    assertEquals(TASK_BEFORE_CONDITION, task.getName());
+
+    //when task is completed
+    taskService.complete(task.getId());
+
+    //then take listener sets variable
+    //non interrupting boundary event is triggered
+    tasksAfterVariableIsSet = taskQuery.list();
+    assertEquals(2, tasksAfterVariableIsSet.size());
+    assertEquals(1, conditionEventSubscriptionQuery.list().size());
+  }
+
+
+  @Test
+  public void testSetVariableInTakeListenerWithAsyncBefore() {
+    final BpmnModelInstance modelInstance = Bpmn.createExecutableProcess(CONDITIONAL_EVENT_PROCESS_KEY)
+      .startEvent()
+      .userTask(TASK_BEFORE_CONDITION_ID)
+      .name(TASK_BEFORE_CONDITION)
+      .sequenceFlowId(FLOW_ID)
+      .userTask().camundaAsyncBefore()
+      .endEvent()
+      .done();
+    CamundaExecutionListener listener = modelInstance.newInstance(CamundaExecutionListener.class);
+    listener.setCamundaEvent(ExecutionListener.EVENTNAME_TAKE);
+    listener.setCamundaExpression(EXPR_SET_VARIABLE);
+    modelInstance.<SequenceFlow>getModelElementById(FLOW_ID).builder().addExtensionElement(listener);
+    deployEventSubProcessWithVariableIsSetInDelegationCode(modelInstance, true);
+
+    // given
+    ProcessInstance procInst = runtimeService.startProcessInstanceByKey(CONDITIONAL_EVENT_PROCESS_KEY);
+
+    TaskQuery taskQuery = taskService.createTaskQuery().processInstanceId(procInst.getId());
+    Task task = taskQuery.singleResult();
+    assertNotNull(task);
+    assertEquals(TASK_BEFORE_CONDITION, task.getName());
+
+    //when task is completed
+    taskService.complete(task.getId());
+
+    //then take listener sets variable
+    //conditional event is triggered
+    tasksAfterVariableIsSet = taskQuery.list();
+    assertEquals(TASK_AFTER_CONDITION, tasksAfterVariableIsSet.get(0).getName());
+  }
+
+  @Test
+  public void testNonInterruptingSetVariableInTakeListenerWithAsyncBefore() {
+    final BpmnModelInstance modelInstance = Bpmn.createExecutableProcess(CONDITIONAL_EVENT_PROCESS_KEY)
+      .startEvent()
+      .userTask(TASK_BEFORE_CONDITION_ID)
+      .name(TASK_BEFORE_CONDITION)
+      .sequenceFlowId(FLOW_ID)
+      .userTask().camundaAsyncBefore()
+      .endEvent()
+      .done();
     CamundaExecutionListener listener = modelInstance.newInstance(CamundaExecutionListener.class);
     listener.setCamundaEvent(ExecutionListener.EVENTNAME_TAKE);
     listener.setCamundaExpression(EXPR_SET_VARIABLE);

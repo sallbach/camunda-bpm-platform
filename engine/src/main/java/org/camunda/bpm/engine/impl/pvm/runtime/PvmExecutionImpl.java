@@ -1825,14 +1825,20 @@ public abstract class PvmExecutionImpl extends CoreExecution implements Activity
   public void dispatchDelayedEventsAndPerformOperation(PvmAtomicOperationContinuation continuation) {
     PvmExecutionImpl execution = this;
 
+    String activityId = execution.getActivityId();
     String activityInstanceId = getActivityInstanceId(execution);
 
     dispatchScopeEvents(execution);
 
     execution = execution.getReplacedBy() != null ? execution.getReplacedBy() : execution;
     String currentActivityInstanceId = getActivityInstanceId(execution);
+    String currentActivityId = execution.getActivityId();
 
-    if (continuation != null && activityInstanceId.equals(currentActivityInstanceId) && !execution.isCanceled()) {
+    if (continuation != null &&
+        ((activityInstanceId == null && activityInstanceId == currentActivityInstanceId && activityId.equals(currentActivityId)) //can be null on transitions
+          || (activityInstanceId != null && activityInstanceId.equals(currentActivityInstanceId)))  //if not then string should equal
+
+        && !execution.isCanceled()) {
       continuation.execute(execution);
     }
   }
@@ -1844,35 +1850,50 @@ public abstract class PvmExecutionImpl extends CoreExecution implements Activity
     scopeExecution.clearDelayedEvents();
 
     Map<PvmExecutionImpl, String> activityInstanceIds = new HashMap<PvmExecutionImpl, String>();
+    Map<PvmExecutionImpl, String> activityIds = new HashMap<PvmExecutionImpl, String>();
 
     for (DelayedVariableEvent event : delayedEvents) {
       PvmExecutionImpl targetScope = event.getTargetScope();
 
       String targetScopeActivityInstanceId = getActivityInstanceId(targetScope);
       activityInstanceIds.put(targetScope, targetScopeActivityInstanceId);
-
+      activityIds.put(targetScope, targetScope.getActivityId());
     }
 
     for (DelayedVariableEvent event : delayedEvents) {
+      PvmExecutionImpl targetScope = getTargetScope(event);
 
-      PvmExecutionImpl targetScope = event.getTargetScope();
-      PvmExecutionImpl replacedBy = targetScope.getReplacedBy();
-
-      // if tree compacted
-      if (replacedBy != null && targetScope.getParent() == replacedBy) {
-        targetScope = replacedBy;
-      }
-
+      //current ////////////////////////////////////////////////////////////////////////////////////////////////////////
       String currentActivityInstanceId = getActivityInstanceId(targetScope);
+      String currentActivityId = targetScope.getActivityId();
+
+      //last ////////////////////////////////////////////////////////////////////////////////////////////////////////
       final String lastActivityInstanceId = activityInstanceIds.get(targetScope);
+      final String lastActivityId = activityIds.get(targetScope);
+
       ActivityImpl targetActivity = targetScope.getActivity();
-      if (lastActivityInstanceId != null && lastActivityInstanceId.equals(currentActivityInstanceId) &&
-        (targetScope.getActivityId() == null
-          || !targetActivity.isScope()
-          || (targetActivity.isScope() && targetScope.isInState(ActivityInstanceState.DEFAULT)))) {
+      if (
+            ((lastActivityInstanceId == null && lastActivityInstanceId == currentActivityInstanceId && lastActivityId.equals(currentActivityId)) //can be null on transitions
+            || (lastActivityInstanceId != null && lastActivityInstanceId.equals(currentActivityInstanceId)))
+            && (targetScope.getActivityId() == null || !targetActivity.isScope()
+            || (targetActivity.isScope() && targetScope.isInState(ActivityInstanceState.DEFAULT)))
+        )
+
+      {
         targetScope.dispatchEvent(event.getEvent());
       }
     }
+  }
+
+  private PvmExecutionImpl getTargetScope(DelayedVariableEvent event) {
+    PvmExecutionImpl targetScope = event.getTargetScope();
+    PvmExecutionImpl replacedBy = targetScope.getReplacedBy();
+
+    // if tree compacted
+    if (replacedBy != null && targetScope.getParent() == replacedBy) {
+      targetScope = replacedBy;
+    }
+    return targetScope;
   }
 
   private String getActivityInstanceId(PvmExecutionImpl targetScope) {

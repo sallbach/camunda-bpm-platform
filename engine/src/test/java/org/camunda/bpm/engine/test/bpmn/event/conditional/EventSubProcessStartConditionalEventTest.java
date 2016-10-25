@@ -19,6 +19,7 @@ import java.util.Map;
 
 import org.camunda.bpm.engine.SuspendedEntityInteractionException;
 import org.camunda.bpm.engine.delegate.ExecutionListener;
+import org.camunda.bpm.engine.runtime.Job;
 import org.camunda.bpm.engine.runtime.ProcessInstance;
 import org.camunda.bpm.engine.task.Task;
 import org.camunda.bpm.engine.task.TaskQuery;
@@ -769,18 +770,30 @@ public class EventSubProcessStartConditionalEventTest extends AbstractConditiona
     ProcessInstance procInst = runtimeService.startProcessInstanceByKey(CONDITIONAL_EVENT_PROCESS_KEY);
 
     TaskQuery taskQuery = taskService.createTaskQuery().processInstanceId(procInst.getId());
-    Task task = taskQuery.singleResult();
-    assertNotNull(task);
-    assertEquals(TASK_BEFORE_CONDITION, task.getName());
 
     //when task is completed
-    taskService.complete(task.getId());
+    taskService.complete(taskQuery.singleResult().getId());
 
     //then take listener sets variable
     //non interrupting boundary event is triggered
-    tasksAfterVariableIsSet = taskQuery.list();
-    assertEquals(2, tasksAfterVariableIsSet.size());
+    Task task = taskQuery.singleResult();
+    assertEquals(TASK_AFTER_CONDITION, task.getName());
+
+    //and job was created
+    Job job = engine.getManagementService().createJobQuery().singleResult();
+    assertNotNull(job);
     assertEquals(1, conditionEventSubscriptionQuery.list().size());
+
+    //when job is executed task is created
+    engine.getManagementService().executeJob(job.getId());
+    //when both tasks are completed
+    taskService.complete(task.getId());
+    taskService.complete(taskQuery.singleResult().getId());
+
+    //then no task exist and process instance is ended
+    tasksAfterVariableIsSet = taskQuery.list();
+    assertEquals(0, tasksAfterVariableIsSet.size());
+    assertNull(runtimeService.createProcessInstanceQuery().singleResult());
   }
 
   @Test

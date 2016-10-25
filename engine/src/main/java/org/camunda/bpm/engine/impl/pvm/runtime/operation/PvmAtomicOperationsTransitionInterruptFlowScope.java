@@ -28,7 +28,7 @@ public class PvmAtomicOperationsTransitionInterruptFlowScope extends PvmAtomicOp
   }
 
   protected void scopeInterrupted(PvmExecutionImpl execution) {
-    execution.performOperation(TRANSITION_CREATE_SCOPE);
+    execution.dispatchDelayedEventsAndPerformOperation(TRANSITION_CREATE_SCOPE);
   }
 
   protected PvmActivity getInterruptingActivity(PvmExecutionImpl execution) {

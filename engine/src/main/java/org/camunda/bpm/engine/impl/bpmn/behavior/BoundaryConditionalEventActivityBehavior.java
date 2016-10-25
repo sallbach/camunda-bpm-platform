@@ -41,8 +41,7 @@ public class BoundaryConditionalEventActivityBehavior extends BoundaryEventActiv
           final VariableEvent variableEvent, final CommandContext commandContext) {
     final PvmExecutionImpl execution = eventSubscription.getExecution();
 
-    if (execution != null && !execution.isEnded() && execution.isScope() &&
-        (execution.isInState(ActivityInstanceState.DEFAULT) || !execution.getActivity().isScope()) // state is default or tree is compacted
+    if (execution != null && !execution.isEnded() && execution.isScope()
         && variableEvent != null && conditionalEvent.tryEvaluate(variableEvent, execution)) {
       execution.executeEventHandlerActivity(eventSubscription.getActivity());
     }

@@ -1720,7 +1720,8 @@ public class ExecutionEntity extends PvmExecutionImpl implements Execution, Proc
     new ExecutionTopDownWalker(this).addPreVisitor(new TreeVisitor<ExecutionEntity>() {
       @Override
       public void visit(ExecutionEntity obj) {
-        if (!obj.getEventSubscriptions().isEmpty()) {
+        if (!obj.getEventSubscriptions().isEmpty() &&
+          (obj.isInState(ActivityInstanceState.DEFAULT) || !obj.getActivity().isScope())) { // state is default or tree is compacted
           execs.add(obj);
         }
       }

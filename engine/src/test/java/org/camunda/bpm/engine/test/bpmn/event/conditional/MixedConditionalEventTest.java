@@ -21,6 +21,7 @@ import org.camunda.bpm.engine.task.Task;
 import org.camunda.bpm.engine.task.TaskQuery;
 import org.camunda.bpm.model.bpmn.Bpmn;
 import org.camunda.bpm.model.bpmn.BpmnModelInstance;
+import org.camunda.bpm.model.bpmn.builder.UserTaskBuilder;
 import org.junit.Assert;
 import org.junit.Test;
 
@@ -79,248 +80,6 @@ public class MixedConditionalEventTest extends AbstractConditionalEventTestCase 
     modelInstance = addBoundaryEvent(modelInstance, activityId, TASK_AFTER_CONDITIONAL_BOUNDARY_EVENT, isInterrupting);
     engine.manageDeployment(repositoryService.createDeployment().addModelInstance(CONDITIONAL_MODEL, modelInstance).deploy());
   }
-
-
-  // execution listener ////////////////////////////////////////////////////////////////////////////////////////////////
-
-  @Test
-  public void testSetVariableOnStartExecutionListener() {
-    final BpmnModelInstance modelInstance = Bpmn.createExecutableProcess(CONDITIONAL_EVENT_PROCESS_KEY)
-      .startEvent()
-      .userTask(TASK_BEFORE_CONDITION_ID)
-      .name(TASK_BEFORE_CONDITION)
-      .userTask(TASK_WITH_CONDITION_ID)
-      .camundaExecutionListenerExpression(ExecutionListener.EVENTNAME_START, EXPR_SET_VARIABLE)
-      .name(TASK_WITH_CONDITION)
-      .endEvent()
-      .done();
-
-    deployMixedProcess(modelInstance, CONDITIONAL_EVENT_PROCESS_KEY, true);
-
-    // given
-    ProcessInstance procInst = runtimeService.startProcessInstanceByKey(CONDITIONAL_EVENT_PROCESS_KEY);
-    TaskQuery taskQuery = taskService.createTaskQuery().processInstanceId(procInst.getId());
-    Task task = taskQuery.singleResult();
-
-    //when task before is completed
-    taskService.complete(task.getId());
-
-    //then conditional boundary should not triggered but conditional start event
-    tasksAfterVariableIsSet = taskQuery.list();
-    assertEquals(TASK_AFTER_CONDITIONAL_START_EVENT, tasksAfterVariableIsSet.get(0).getName());
-  }
-
-  @Test
-  public void testSetVariableOnEndExecutionListener() {
-
-    final BpmnModelInstance modelInstance = Bpmn.createExecutableProcess(CONDITIONAL_EVENT_PROCESS_KEY)
-      .startEvent()
-      .userTask(TASK_WITH_CONDITION_ID)
-      .camundaExecutionListenerExpression(ExecutionListener.EVENTNAME_END, EXPR_SET_VARIABLE)
-      .name(TASK_WITH_CONDITION)
-      .endEvent()
-      .done();
-
-    deployMixedProcess(modelInstance, CONDITIONAL_EVENT_PROCESS_KEY, true);
-
-    // given
-    ProcessInstance procInst = runtimeService.startProcessInstanceByKey(CONDITIONAL_EVENT_PROCESS_KEY);
-    TaskQuery taskQuery = taskService.createTaskQuery().processInstanceId(procInst.getId());
-    Task task = taskQuery.singleResult();
-
-    //when task before is completed
-    taskService.complete(task.getId());
-
-    //then conditional boundary should not triggered but conditional start event
-    tasksAfterVariableIsSet = taskQuery.list();
-    assertEquals(TASK_AFTER_CONDITIONAL_START_EVENT, tasksAfterVariableIsSet.get(0).getName());
-  }
-
-
-  @Test
-  public void testNonInterruptingSetVariableOnStartExecutionListener() {
-    final BpmnModelInstance modelInstance = Bpmn.createExecutableProcess(CONDITIONAL_EVENT_PROCESS_KEY)
-      .startEvent()
-      .userTask(TASK_BEFORE_CONDITION_ID)
-      .name(TASK_BEFORE_CONDITION)
-      .userTask(TASK_WITH_CONDITION_ID)
-      .camundaExecutionListenerExpression(ExecutionListener.EVENTNAME_START, EXPR_SET_VARIABLE)
-      .name(TASK_WITH_CONDITION)
-      .endEvent()
-      .done();
-
-    deployMixedProcess(modelInstance, CONDITIONAL_EVENT_PROCESS_KEY, false);
-
-    // given
-    ProcessInstance procInst = runtimeService.startProcessInstanceByKey(CONDITIONAL_EVENT_PROCESS_KEY);
-    TaskQuery taskQuery = taskService.createTaskQuery().processInstanceId(procInst.getId());
-
-    //when task before is completed
-    taskService.complete(taskQuery.singleResult().getId());
-
-    //then conditional boundary should not triggered but conditional start event
-    tasksAfterVariableIsSet = taskQuery.list();
-    assertEquals(2, tasksAfterVariableIsSet.size());
-    for (Task task : tasksAfterVariableIsSet) {
-      assertTrue(task.getName().equals(TASK_AFTER_CONDITIONAL_START_EVENT) || task.getName().equals(TASK_WITH_CONDITION));
-    }
-  }
-
-  @Test
-  public void testNonInterruptingSetVariableOnEndExecutionListener() {
-
-    final BpmnModelInstance modelInstance = Bpmn.createExecutableProcess(CONDITIONAL_EVENT_PROCESS_KEY)
-      .startEvent()
-      .userTask(TASK_WITH_CONDITION_ID)
-      .camundaExecutionListenerExpression(ExecutionListener.EVENTNAME_END, EXPR_SET_VARIABLE)
-      .name(TASK_WITH_CONDITION)
-      .userTask().name(TASK_AFTER_OUTPUT_MAPPING)
-      .endEvent()
-      .done();
-
-    deployMixedProcess(modelInstance, CONDITIONAL_EVENT_PROCESS_KEY, false);
-
-    // given
-    ProcessInstance procInst = runtimeService.startProcessInstanceByKey(CONDITIONAL_EVENT_PROCESS_KEY);
-    TaskQuery taskQuery = taskService.createTaskQuery().processInstanceId(procInst.getId());
-
-    //when task before is completed
-    taskService.complete(taskQuery.singleResult().getId());
-
-    //then conditional boundary should not triggered but conditional start event
-    tasksAfterVariableIsSet = taskQuery.list();
-    assertEquals(2, tasksAfterVariableIsSet.size());
-    for (Task task : tasksAfterVariableIsSet) {
-      assertTrue(task.getName().equals(TASK_AFTER_CONDITIONAL_START_EVENT) || task.getName().equals(TASK_AFTER_OUTPUT_MAPPING));
-    }
-  }
-
-
-
-
-
-
-
-
-
-
-
-  @Test
-  public void testSetVariableOnParentInStartExecutionListener() {
-    final BpmnModelInstance modelInstance = Bpmn.createExecutableProcess(CONDITIONAL_EVENT_PROCESS_KEY)
-      .startEvent()
-      .userTask(TASK_BEFORE_CONDITION_ID)
-      .name(TASK_BEFORE_CONDITION)
-      .userTask(TASK_WITH_CONDITION_ID)
-      .camundaExecutionListenerExpression(ExecutionListener.EVENTNAME_START, EXPR_SET_VARIABLE_ON_PARENT)
-      .name(TASK_WITH_CONDITION)
-      .endEvent()
-      .done();
-
-    deployMixedProcess(modelInstance, CONDITIONAL_EVENT_PROCESS_KEY, true);
-
-    // given
-    ProcessInstance procInst = runtimeService.startProcessInstanceByKey(CONDITIONAL_EVENT_PROCESS_KEY);
-    TaskQuery taskQuery = taskService.createTaskQuery().processInstanceId(procInst.getId());
-    Task task = taskQuery.singleResult();
-
-    //when task before is completed
-    taskService.complete(task.getId());
-
-    //then conditional boundary should not triggered but conditional start event
-    tasksAfterVariableIsSet = taskQuery.list();
-    assertEquals(TASK_AFTER_CONDITIONAL_START_EVENT, tasksAfterVariableIsSet.get(0).getName());
-  }
-
-  @Test
-  public void testSetVariableOnParentInEndExecutionListener() {
-
-    final BpmnModelInstance modelInstance = Bpmn.createExecutableProcess(CONDITIONAL_EVENT_PROCESS_KEY)
-      .startEvent()
-      .userTask(TASK_WITH_CONDITION_ID)
-      .camundaExecutionListenerExpression(ExecutionListener.EVENTNAME_END, EXPR_SET_VARIABLE)
-      .name(TASK_WITH_CONDITION)
-      .endEvent()
-      .done();
-
-    deployMixedProcess(modelInstance, CONDITIONAL_EVENT_PROCESS_KEY, true);
-
-    // given
-    ProcessInstance procInst = runtimeService.startProcessInstanceByKey(CONDITIONAL_EVENT_PROCESS_KEY);
-    TaskQuery taskQuery = taskService.createTaskQuery().processInstanceId(procInst.getId());
-    Task task = taskQuery.singleResult();
-
-    //when task before is completed
-    taskService.complete(task.getId());
-
-    //then conditional boundary should not triggered but conditional start event
-    tasksAfterVariableIsSet = taskQuery.list();
-    assertEquals(TASK_AFTER_CONDITIONAL_START_EVENT, tasksAfterVariableIsSet.get(0).getName());
-  }
-
-
-  @Test
-  public void testNonInterruptingSetVariableOnParentInStartExecutionListener() {
-    final BpmnModelInstance modelInstance = Bpmn.createExecutableProcess(CONDITIONAL_EVENT_PROCESS_KEY)
-      .startEvent()
-      .userTask(TASK_BEFORE_CONDITION_ID)
-      .name(TASK_BEFORE_CONDITION)
-      .userTask(TASK_WITH_CONDITION_ID)
-      .camundaExecutionListenerExpression(ExecutionListener.EVENTNAME_START, EXPR_SET_VARIABLE)
-      .name(TASK_WITH_CONDITION)
-      .endEvent()
-      .done();
-
-    deployMixedProcess(modelInstance, CONDITIONAL_EVENT_PROCESS_KEY, false);
-
-    // given
-    ProcessInstance procInst = runtimeService.startProcessInstanceByKey(CONDITIONAL_EVENT_PROCESS_KEY);
-    TaskQuery taskQuery = taskService.createTaskQuery().processInstanceId(procInst.getId());
-
-    //when task before is completed
-    taskService.complete(taskQuery.singleResult().getId());
-
-    //then conditional boundary should not triggered but conditional start event
-    tasksAfterVariableIsSet = taskQuery.list();
-    assertEquals(2, tasksAfterVariableIsSet.size());
-    for (Task task : tasksAfterVariableIsSet) {
-      assertTrue(task.getName().equals(TASK_AFTER_CONDITIONAL_START_EVENT) || task.getName().equals(TASK_WITH_CONDITION));
-    }
-  }
-
-  @Test
-  public void testNonInterruptingSetVariableOnParentInEndExecutionListener() {
-
-    final BpmnModelInstance modelInstance = Bpmn.createExecutableProcess(CONDITIONAL_EVENT_PROCESS_KEY)
-      .startEvent()
-      .userTask(TASK_WITH_CONDITION_ID)
-      .camundaExecutionListenerExpression(ExecutionListener.EVENTNAME_END, EXPR_SET_VARIABLE)
-      .name(TASK_WITH_CONDITION)
-      .userTask().name(TASK_AFTER_OUTPUT_MAPPING)
-      .endEvent()
-      .done();
-
-    deployMixedProcess(modelInstance, CONDITIONAL_EVENT_PROCESS_KEY, false);
-
-    // given
-    ProcessInstance procInst = runtimeService.startProcessInstanceByKey(CONDITIONAL_EVENT_PROCESS_KEY);
-    TaskQuery taskQuery = taskService.createTaskQuery().processInstanceId(procInst.getId());
-
-    //when task before is completed
-    taskService.complete(taskQuery.singleResult().getId());
-
-    //then conditional boundary should not triggered but conditional start event
-    tasksAfterVariableIsSet = taskQuery.list();
-    assertEquals(2, tasksAfterVariableIsSet.size());
-    for (Task task : tasksAfterVariableIsSet) {
-      assertTrue(task.getName().equals(TASK_AFTER_CONDITIONAL_START_EVENT) || task.getName().equals(TASK_AFTER_OUTPUT_MAPPING));
-    }
-  }
-
-
-
-
-
 
   // io mapping ////////////////////////////////////////////////////////////////////////////////////////////////////////
 
@@ -706,9 +465,9 @@ public class MixedConditionalEventTest extends AbstractConditionalEventTestCase 
   }
 
 
-  // sub process testing with event sub process on process instance and in sub process
-  // and conditional start event and boundary event on sub process
-  // execution listener in sub process //////////////////////////////////////////////////////////////////////////////////
+  // sub process testing with event sub process on process instance and in sub process /////////////////////////////////
+  // and conditional start event and boundary event on sub process /////////////////////////////////////////////////////
+  // execution listener in sub process /////////////////////////////////////////////////////////////////////////////////
 
   @Test
   public void testSetVariableOnStartExecutionListenerInSubProcessWithBoundary() {
@@ -770,7 +529,6 @@ public class MixedConditionalEventTest extends AbstractConditionalEventTestCase 
     tasksAfterVariableIsSet = taskQuery.list();
     assertEquals(TASK_AFTER_CONDITIONAL_START_EVENT, tasksAfterVariableIsSet.get(0).getName());
   }
-
 
   @Test
   public void testNonInterruptingSetVariableOnStartExecutionListenerInSubProcessWithBoundary() {
@@ -964,8 +722,10 @@ public class MixedConditionalEventTest extends AbstractConditionalEventTestCase 
     assertEquals(4, tasksAfterVariableIsSet.size());
   }
 
-  //sub process with call activity and out mapping
-  //conditional boundary on sub and call activity and event sub process on process instance level
+
+  //sub process with call activity and out mapping /////////////////////////////////////////////////////////////////////
+  //conditional boundary on sub process and call activity //////////////////////////////////////////////////////////////
+  //conditional start event event sub process on process instance level and on sub process /////////////////////////////
 
   @Test
   public void testSetVariableInOutMappingOfCallActivity() {

@@ -1799,17 +1799,31 @@ public abstract class PvmExecutionImpl extends CoreExecution implements Activity
   protected transient List<DelayedVariableEvent> delayedEvents = new ArrayList<DelayedVariableEvent>();
 
   public void delayEvent(PvmExecutionImpl targetScope, VariableEvent variableEvent) {
-    DelayedVariableEvent delayedEvent = new DelayedVariableEvent(targetScope, variableEvent);
-    delayedEvents.add(delayedEvent);
+    DelayedVariableEvent delayedVariableEvent = new DelayedVariableEvent(targetScope, variableEvent);
+    delayEvent(delayedVariableEvent);
+  }
+
+  public void delayEvent(DelayedVariableEvent delayedVariableEvent) {
+    if (isProcessInstanceExecution()) {
+      delayedEvents.add(delayedVariableEvent);
+    } else {
+      getProcessInstance().delayEvent(delayedVariableEvent);
+    }
   }
 
   public List<DelayedVariableEvent> getDelayedEvents() {
-    return delayedEvents;
+    if (isProcessInstanceExecution()) {
+      return delayedEvents;
+    }
+    return getProcessInstance().getDelayedEvents();
   }
 
-  public void clearDelayedEvents()
-  {
-    delayedEvents.clear();
+  public void clearDelayedEvents() {
+    if (isProcessInstanceExecution()) {
+      delayedEvents.clear();
+    } else {
+      getProcessInstance().clearDelayedEvents();
+    }
   }
 
   public void dispatchDelayedEventsAndPerformOperation(final PvmAtomicOperation atomicOperation) {

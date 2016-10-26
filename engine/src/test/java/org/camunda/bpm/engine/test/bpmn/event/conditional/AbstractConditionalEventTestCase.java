@@ -46,6 +46,7 @@ public abstract class AbstractConditionalEventTestCase {
   protected static final String CONDITIONAL_EVENT = "conditionalEvent";
   protected static final String CONDITION_EXPR = "${variable == 1}";
   protected static final String EXPR_SET_VARIABLE = "${execution.setVariable(\"variable\", 1)}";
+  protected static final String EXPR_SET_VARIABLE_ON_PARENT = "${execution.getParent().setVariable(\"variable\", 1)}";
   protected static final String CONDITIONAL_MODEL = "conditionalModel.bpmn20.xml";
   protected static final String CONDITIONAL_VAR_EVENTS = "create, update";
   protected static final String CONDITIONAL_VAR_EVENT_UPDATE = "update";

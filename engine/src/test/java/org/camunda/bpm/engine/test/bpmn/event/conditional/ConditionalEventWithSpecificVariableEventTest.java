@@ -40,6 +40,12 @@ import static org.junit.Assert.assertNotNull;
 @RunWith(Parameterized.class)
 public class ConditionalEventWithSpecificVariableEventTest extends AbstractConditionalEventTestCase {
 
+  private interface ConditionalProcessVarSpecification {
+    BpmnModelInstance getProcessWithVarName(boolean interrupting);
+    BpmnModelInstance getProcessWithVarNameAndEvents(boolean interrupting, String varEvent);
+    BpmnModelInstance getProcessWithVarEvents(boolean interrupting, String varEvent);
+  }
+
   @Parameterized.Parameters(name = "{0}")
   public static Collection<Object[]> data() {
     return Arrays.asList(new Object[][] {

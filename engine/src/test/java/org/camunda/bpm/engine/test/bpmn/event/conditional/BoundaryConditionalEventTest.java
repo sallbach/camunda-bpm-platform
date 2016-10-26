@@ -976,6 +976,141 @@ public class BoundaryConditionalEventTest extends AbstractConditionalEventTestCa
     assertEquals(TASK_AFTER_OUTPUT_MAPPING, tasksAfterVariableIsSet.get(0).getName());
   }
 
+
+  @Test
+  public void testSetVariableInOutMappingOfCallActivity() {
+    engine.manageDeployment(repositoryService.createDeployment().addModelInstance(CONDITIONAL_MODEL, DELEGATED_PROCESS).deploy());
+
+    final BpmnModelInstance modelInstance = Bpmn.createExecutableProcess(CONDITIONAL_EVENT_PROCESS_KEY)
+      .startEvent()
+      .userTask(TASK_BEFORE_CONDITION_ID)
+      .name(TASK_BEFORE_CONDITION)
+      .callActivity(TASK_WITH_CONDITION_ID)
+      .calledElement(DELEGATED_PROCESS_KEY)
+      .camundaOut(VARIABLE_NAME, VARIABLE_NAME)
+      .userTask().name(TASK_AFTER_OUTPUT_MAPPING)
+      .endEvent()
+      .done();
+    deployBoundaryEventProcess(modify(modelInstance).activityBuilder(TASK_WITH_CONDITION_ID), true);
+
+    // given
+    ProcessInstance procInst = runtimeService.startProcessInstanceByKey(CONDITIONAL_EVENT_PROCESS_KEY);
+
+    TaskQuery taskQuery = taskService.createTaskQuery().processInstanceId(procInst.getId());
+    Task task = taskQuery.singleResult();
+    assertNotNull(task);
+    assertEquals(TASK_BEFORE_CONDITION, task.getName());
+
+    //when task is completed
+    taskService.complete(task.getId());
+
+    //then out mapping from call activity sets variable
+    //-> interrupting conditional event is triggered
+    tasksAfterVariableIsSet = taskQuery.list();
+    assertEquals(TASK_AFTER_CONDITION, tasksAfterVariableIsSet.get(0).getName());
+  }
+
+  @Test
+  public void testNonInterruptingSetVariableInOutMappingOfCallActivity() {
+    engine.manageDeployment(repositoryService.createDeployment().addModelInstance(CONDITIONAL_MODEL, DELEGATED_PROCESS).deploy());
+
+    final BpmnModelInstance modelInstance = Bpmn.createExecutableProcess(CONDITIONAL_EVENT_PROCESS_KEY)
+      .startEvent()
+      .userTask(TASK_BEFORE_CONDITION_ID)
+      .name(TASK_BEFORE_CONDITION)
+      .callActivity(TASK_WITH_CONDITION_ID)
+      .calledElement(DELEGATED_PROCESS_KEY)
+      .camundaOut(VARIABLE_NAME, VARIABLE_NAME)
+      .userTask().name(TASK_AFTER_OUTPUT_MAPPING)
+      .endEvent()
+      .done();
+    deployBoundaryEventProcess(modify(modelInstance).activityBuilder(TASK_WITH_CONDITION_ID), false);
+
+
+    // given
+    ProcessInstance procInst = runtimeService.startProcessInstanceByKey(CONDITIONAL_EVENT_PROCESS_KEY);
+
+    TaskQuery taskQuery = taskService.createTaskQuery().processInstanceId(procInst.getId());
+    Task task = taskQuery.singleResult();
+    assertNotNull(task);
+    assertEquals(TASK_BEFORE_CONDITION, task.getName());
+
+    //when task before service task is completed
+    taskService.complete(task.getId());
+
+    //then out mapping of call activity sets a variable
+    //-> non interrupting conditional event is triggered
+    tasksAfterVariableIsSet = taskQuery.list();
+    assertEquals(2, tasksAfterVariableIsSet.size());
+    assertEquals(0, conditionEventSubscriptionQuery.count());
+  }
+
+  @Test
+  public void testSetVariableInInMappingOfCallActivity() {
+    engine.manageDeployment(repositoryService.createDeployment().addModelInstance(CONDITIONAL_MODEL, DELEGATED_PROCESS).deploy());
+
+    final BpmnModelInstance modelInstance = Bpmn.createExecutableProcess(CONDITIONAL_EVENT_PROCESS_KEY)
+      .startEvent()
+      .userTask(TASK_BEFORE_CONDITION_ID)
+      .name(TASK_BEFORE_CONDITION)
+      .callActivity(TASK_WITH_CONDITION_ID)
+      .calledElement(DELEGATED_PROCESS_KEY)
+      .camundaIn(VARIABLE_NAME, VARIABLE_NAME)
+      .userTask().name(TASK_AFTER_OUTPUT_MAPPING)
+      .endEvent()
+      .done();
+    deployBoundaryEventProcess(modify(modelInstance).activityBuilder(TASK_WITH_CONDITION_ID), true);
+
+    // given
+    ProcessInstance procInst = runtimeService.startProcessInstanceByKey(CONDITIONAL_EVENT_PROCESS_KEY);
+
+    TaskQuery taskQuery = taskService.createTaskQuery().processInstanceId(procInst.getId());
+    Task task = taskQuery.singleResult();
+    assertNotNull(task);
+    assertEquals(TASK_BEFORE_CONDITION, task.getName());
+
+    //when task is completed
+    taskService.complete(task.getId());
+
+    //then in mapping from call activity sets variable
+    //-> interrupting conditional event is not triggered, since variable is only locally
+    tasksAfterVariableIsSet = taskQuery.list();
+    assertEquals(TASK_AFTER_OUTPUT_MAPPING, tasksAfterVariableIsSet.get(0).getName());
+  }
+
+  @Test
+  public void testNonInterruptingSetVariableInInMappingOfCallActivity() {
+    engine.manageDeployment(repositoryService.createDeployment().addModelInstance(CONDITIONAL_MODEL, DELEGATED_PROCESS).deploy());
+
+    final BpmnModelInstance modelInstance = Bpmn.createExecutableProcess(CONDITIONAL_EVENT_PROCESS_KEY)
+      .startEvent()
+      .userTask(TASK_BEFORE_CONDITION_ID)
+      .name(TASK_BEFORE_CONDITION)
+      .callActivity(TASK_WITH_CONDITION_ID)
+      .calledElement(DELEGATED_PROCESS_KEY)
+      .camundaIn(VARIABLE_NAME, VARIABLE_NAME)
+      .userTask().name(TASK_AFTER_OUTPUT_MAPPING)
+      .endEvent()
+      .done();
+    deployBoundaryEventProcess(modify(modelInstance).activityBuilder(TASK_WITH_CONDITION_ID), false);
+
+    // given
+    ProcessInstance procInst = runtimeService.startProcessInstanceByKey(CONDITIONAL_EVENT_PROCESS_KEY);
+
+    TaskQuery taskQuery = taskService.createTaskQuery().processInstanceId(procInst.getId());
+    Task task = taskQuery.singleResult();
+    assertNotNull(task);
+    assertEquals(TASK_BEFORE_CONDITION, task.getName());
+
+    //when task is completed
+    taskService.complete(task.getId());
+
+    //then in mapping from call activity sets variable
+    //-> interrupting conditional event is not triggered, since variable is only locally
+    tasksAfterVariableIsSet = taskQuery.list();
+    assertEquals(TASK_AFTER_OUTPUT_MAPPING, tasksAfterVariableIsSet.get(0).getName());
+  }
+
   @Test
   public void testSetVariableInStartListener() {
     final BpmnModelInstance modelInstance = Bpmn.createExecutableProcess(CONDITIONAL_EVENT_PROCESS_KEY)

@@ -26,6 +26,7 @@ import org.junit.Test;
 
 import static org.camunda.bpm.engine.test.api.runtime.migration.ModifiableBpmnModelInstance.modify;
 import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -36,11 +37,10 @@ public class MixedConditionalEventTest extends AbstractConditionalEventTestCase 
 
   protected static final String TASK_AFTER_CONDITIONAL_BOUNDARY_EVENT = "Task after conditional boundary event";
   protected static final String TASK_AFTER_CONDITIONAL_START_EVENT = "Task after conditional start event";
-  protected static final String EVENT_SUB_PROCESS_ID = "eventSubProcess";
   protected static final String TASK_AFTER_COND_START_EVENT_IN_SUB_PROCESS = "Task after cond start event in sub process";
+  protected static final String TASK_AFTER_COND_BOUN_EVENT_IN_SUB_PROCESS = "Task after cond bound event in sub process";
 
-
-  protected BpmnModelInstance addBoundaryEvent(BpmnModelInstance modelInstance, String activityId, boolean isInterrupting) {
+  protected BpmnModelInstance addBoundaryEvent(BpmnModelInstance modelInstance, String activityId, String userTaskName, boolean isInterrupting) {
     return modify(modelInstance)
       .activityBuilder(activityId)
       .boundaryEvent()
@@ -49,12 +49,12 @@ public class MixedConditionalEventTest extends AbstractConditionalEventTestCase 
       .condition(CONDITION_EXPR)
       .conditionalEventDefinitionDone()
       .userTask()
-      .name(TASK_AFTER_CONDITIONAL_BOUNDARY_EVENT)
+      .name(userTaskName)
       .endEvent()
       .done();
   }
 
-  protected BpmnModelInstance addEventSubProcess(BpmnModelInstance model, String parentId, String userTaskId, boolean isInterrupting) {
+  protected BpmnModelInstance addEventSubProcess(BpmnModelInstance model, String parentId, String userTaskName, boolean isInterrupting) {
     return modify(model)
       .addSubProcessTo(parentId)
       .triggerByEvent()
@@ -65,7 +65,7 @@ public class MixedConditionalEventTest extends AbstractConditionalEventTestCase 
       .condition(CONDITION_EXPR)
       .conditionalEventDefinitionDone()
       .userTask()
-      .name(userTaskId)
+      .name(userTaskName)
       .endEvent()
       .done();
   }
@@ -76,7 +76,7 @@ public class MixedConditionalEventTest extends AbstractConditionalEventTestCase 
 
   protected void deployMixedProcess(BpmnModelInstance model, String parentId, String activityId, boolean isInterrupting) {
     BpmnModelInstance modelInstance = addEventSubProcess(model, parentId, TASK_AFTER_CONDITIONAL_START_EVENT, isInterrupting);
-    modelInstance = addBoundaryEvent(modelInstance, activityId, isInterrupting);
+    modelInstance = addBoundaryEvent(modelInstance, activityId, TASK_AFTER_CONDITIONAL_BOUNDARY_EVENT, isInterrupting);
     engine.manageDeployment(repositoryService.createDeployment().addModelInstance(CONDITIONAL_MODEL, modelInstance).deploy());
   }
 
@@ -88,10 +88,10 @@ public class MixedConditionalEventTest extends AbstractConditionalEventTestCase 
     final BpmnModelInstance modelInstance = Bpmn.createExecutableProcess(CONDITIONAL_EVENT_PROCESS_KEY)
       .startEvent()
       .userTask(TASK_BEFORE_CONDITION_ID)
-        .name(TASK_BEFORE_CONDITION)
+      .name(TASK_BEFORE_CONDITION)
       .userTask(TASK_WITH_CONDITION_ID)
-        .camundaExecutionListenerExpression(ExecutionListener.EVENTNAME_START, EXPR_SET_VARIABLE)
-        .name(TASK_WITH_CONDITION)
+      .camundaExecutionListenerExpression(ExecutionListener.EVENTNAME_START, EXPR_SET_VARIABLE)
+      .name(TASK_WITH_CONDITION)
       .endEvent()
       .done();
 
@@ -317,14 +317,14 @@ public class MixedConditionalEventTest extends AbstractConditionalEventTestCase 
     final BpmnModelInstance modelInstance = Bpmn.createExecutableProcess(CONDITIONAL_EVENT_PROCESS_KEY)
       .startEvent()
       .subProcess(SUB_PROCESS_ID)
-        .embeddedSubProcess()
-        .startEvent()
-        .userTask(TASK_BEFORE_CONDITION_ID)
-        .name(TASK_BEFORE_CONDITION)
-        .userTask(TASK_WITH_CONDITION_ID)
-        .camundaExecutionListenerExpression(ExecutionListener.EVENTNAME_START, EXPR_SET_VARIABLE)
-        .name(TASK_WITH_CONDITION)
-        .endEvent()
+      .embeddedSubProcess()
+      .startEvent()
+      .userTask(TASK_BEFORE_CONDITION_ID)
+      .name(TASK_BEFORE_CONDITION)
+      .userTask(TASK_WITH_CONDITION_ID)
+      .camundaExecutionListenerExpression(ExecutionListener.EVENTNAME_START, EXPR_SET_VARIABLE)
+      .name(TASK_WITH_CONDITION)
+      .endEvent()
       .subProcessDone()
       .endEvent()
       .done();
@@ -350,12 +350,12 @@ public class MixedConditionalEventTest extends AbstractConditionalEventTestCase 
     final BpmnModelInstance modelInstance = Bpmn.createExecutableProcess(CONDITIONAL_EVENT_PROCESS_KEY)
       .startEvent()
       .subProcess(SUB_PROCESS_ID)
-        .embeddedSubProcess()
-        .startEvent()
-        .userTask(TASK_WITH_CONDITION_ID)
-        .camundaExecutionListenerExpression(ExecutionListener.EVENTNAME_END, EXPR_SET_VARIABLE)
-        .name(TASK_WITH_CONDITION)
-        .endEvent()
+      .embeddedSubProcess()
+      .startEvent()
+      .userTask(TASK_WITH_CONDITION_ID)
+      .camundaExecutionListenerExpression(ExecutionListener.EVENTNAME_END, EXPR_SET_VARIABLE)
+      .name(TASK_WITH_CONDITION)
+      .endEvent()
       .subProcessDone()
       .endEvent()
       .done();
@@ -550,13 +550,13 @@ public class MixedConditionalEventTest extends AbstractConditionalEventTestCase 
     final BpmnModelInstance modelInstance = Bpmn.createExecutableProcess(CONDITIONAL_EVENT_PROCESS_KEY)
       .startEvent()
       .subProcess(SUB_PROCESS_ID)
-        .embeddedSubProcess()
-        .startEvent()
-        .userTask(TASK_WITH_CONDITION_ID)
-        .camundaOutputParameter(VARIABLE_NAME, "1")
-        .name(TASK_WITH_CONDITION)
-        .userTask().name(TASK_AFTER_OUTPUT_MAPPING)
-        .endEvent()
+      .embeddedSubProcess()
+      .startEvent()
+      .userTask(TASK_WITH_CONDITION_ID)
+      .camundaOutputParameter(VARIABLE_NAME, "1")
+      .name(TASK_WITH_CONDITION)
+      .userTask().name(TASK_AFTER_OUTPUT_MAPPING)
+      .endEvent()
       .subProcessDone()
       .endEvent()
       .done();
@@ -588,12 +588,12 @@ public class MixedConditionalEventTest extends AbstractConditionalEventTestCase 
     BpmnModelInstance modelInstance = Bpmn.createExecutableProcess(CONDITIONAL_EVENT_PROCESS_KEY)
       .startEvent()
       .subProcess(SUB_PROCESS_ID)
-        .camundaExecutionListenerExpression(ExecutionListener.EVENTNAME_START, EXPR_SET_VARIABLE)
-        .embeddedSubProcess()
-        .startEvent()
-        .userTask(TASK_WITH_CONDITION_ID)
-        .name(TASK_WITH_CONDITION)
-        .endEvent()
+      .camundaExecutionListenerExpression(ExecutionListener.EVENTNAME_START, EXPR_SET_VARIABLE)
+      .embeddedSubProcess()
+      .startEvent()
+      .userTask(TASK_WITH_CONDITION_ID)
+      .name(TASK_WITH_CONDITION)
+      .endEvent()
       .subProcessDone()
       .endEvent()
       .done();
@@ -837,4 +837,91 @@ public class MixedConditionalEventTest extends AbstractConditionalEventTestCase 
     assertEquals(4, tasksAfterVariableIsSet.size());
   }
 
+  //sub process with call activity and out mapping
+  //conditional boundary on sub and call activity and event sub process on process instance level
+
+  @Test
+  public void testSetVariableInOutMappingOfCallActivity() {
+    engine.manageDeployment(repositoryService.createDeployment().addModelInstance(CONDITIONAL_MODEL, DELEGATED_PROCESS).deploy());
+
+    BpmnModelInstance modelInstance = Bpmn.createExecutableProcess(CONDITIONAL_EVENT_PROCESS_KEY)
+      .startEvent()
+      .userTask(TASK_BEFORE_CONDITION_ID)
+      .name(TASK_BEFORE_CONDITION)
+      .subProcess(SUB_PROCESS_ID)
+      .embeddedSubProcess()
+      .startEvent()
+      .callActivity(TASK_WITH_CONDITION_ID)
+      .calledElement(DELEGATED_PROCESS_KEY)
+      .camundaOut(VARIABLE_NAME, VARIABLE_NAME)
+      .userTask().name(TASK_AFTER_OUTPUT_MAPPING)
+      .endEvent()
+      .subProcessDone()
+      .endEvent()
+      .done();
+
+    modelInstance = addEventSubProcess(modelInstance, SUB_PROCESS_ID, TASK_AFTER_COND_START_EVENT_IN_SUB_PROCESS, true);
+    modelInstance = addBoundaryEvent(modelInstance, TASK_WITH_CONDITION_ID, TASK_AFTER_COND_BOUN_EVENT_IN_SUB_PROCESS, true);
+    deployMixedProcess(modelInstance, CONDITIONAL_EVENT_PROCESS_KEY, SUB_PROCESS_ID, true);
+
+    // given
+    ProcessInstance procInst = runtimeService.startProcessInstanceByKey(CONDITIONAL_EVENT_PROCESS_KEY);
+
+    TaskQuery taskQuery = taskService.createTaskQuery().processInstanceId(procInst.getId());
+    Task task = taskQuery.singleResult();
+    assertNotNull(task);
+    assertEquals(TASK_BEFORE_CONDITION, task.getName());
+
+    //when task is completed
+    taskService.complete(task.getId());
+
+    //then out mapping from call activity sets variable
+    //-> interrupting conditional start event on process instance level is triggered
+    tasksAfterVariableIsSet = taskQuery.list();
+    assertEquals(TASK_AFTER_CONDITIONAL_START_EVENT, tasksAfterVariableIsSet.get(0).getName());
+  }
+
+  @Test
+  public void testNonInterruptingSetVariableInOutMappingOfCallActivity() {
+    engine.manageDeployment(repositoryService.createDeployment().addModelInstance(CONDITIONAL_MODEL, DELEGATED_PROCESS).deploy());
+
+    BpmnModelInstance modelInstance = Bpmn.createExecutableProcess(CONDITIONAL_EVENT_PROCESS_KEY)
+      .startEvent()
+      .userTask(TASK_BEFORE_CONDITION_ID)
+      .name(TASK_BEFORE_CONDITION)
+      .subProcess(SUB_PROCESS_ID)
+      .embeddedSubProcess()
+      .startEvent()
+      .callActivity(TASK_WITH_CONDITION_ID)
+      .calledElement(DELEGATED_PROCESS_KEY)
+      .camundaOut(VARIABLE_NAME, VARIABLE_NAME)
+      .userTask().name(TASK_AFTER_OUTPUT_MAPPING)
+      .endEvent()
+      .subProcessDone()
+      .endEvent()
+      .done();
+
+    modelInstance = addEventSubProcess(modelInstance, SUB_PROCESS_ID, TASK_AFTER_COND_START_EVENT_IN_SUB_PROCESS, false);
+    modelInstance = addBoundaryEvent(modelInstance, TASK_WITH_CONDITION_ID, TASK_AFTER_COND_BOUN_EVENT_IN_SUB_PROCESS, false);
+    deployMixedProcess(modelInstance, CONDITIONAL_EVENT_PROCESS_KEY, SUB_PROCESS_ID, false);
+
+
+    // given
+    ProcessInstance procInst = runtimeService.startProcessInstanceByKey(CONDITIONAL_EVENT_PROCESS_KEY);
+
+    TaskQuery taskQuery = taskService.createTaskQuery().processInstanceId(procInst.getId());
+    Task task = taskQuery.singleResult();
+    assertNotNull(task);
+    assertEquals(TASK_BEFORE_CONDITION, task.getName());
+
+    //when task before service task is completed
+    taskService.complete(task.getId());
+
+    //then out mapping of call activity sets a variable
+    //-> all non interrupting conditional events are triggered
+    tasksAfterVariableIsSet = taskQuery.list();
+    assertEquals(5, tasksAfterVariableIsSet.size());
+    //three subscriptions: event sub process in sub process and on process instance level and boundary event of sub process
+    assertEquals(3, conditionEventSubscriptionQuery.count());
+  }
 }

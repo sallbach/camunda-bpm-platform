@@ -1570,143 +1570,28 @@ public class BoundaryConditionalEventTest extends AbstractConditionalEventTestCa
     assertEquals(1, conditionEventSubscriptionQuery.list().size());
   }
 
-  // variable name /////////////////////////////////////////////////////////////
-
-  @Test
-  public void testVariableConditionWithVariableName() {
-
-    //given process with boundary conditional event and defined variable name
-    deployBoundaryEventProcessWithVarName(true);
-
-    ProcessInstance procInst = runtimeService.startProcessInstanceByKey(CONDITIONAL_EVENT_PROCESS_KEY);
-    TaskQuery taskQuery = taskService.createTaskQuery().processInstanceId(procInst.getId());
-    Task task = taskQuery.singleResult();
-    assertNotNull(task);
-
-    //when variable with name `variable1` is set on execution
-    taskService.setVariable(task.getId(), VARIABLE_NAME + 1, 1);
-
-    //then nothing happens
-    task = taskQuery.singleResult();
-    assertNotNull(task);
-    assertEquals(TASK_BEFORE_CONDITION, task.getName());
-    assertEquals(1, conditionEventSubscriptionQuery.list().size());
-
-    //when variable with name `variable` is set on execution
-    taskService.setVariable(task.getId(), VARIABLE_NAME, 1);
-
-    //then execution is at user task after conditional event
-    tasksAfterVariableIsSet = taskQuery.list();
-    assertEquals(TASK_AFTER_CONDITION, tasksAfterVariableIsSet.get(0).getName());
-    assertEquals(0, conditionEventSubscriptionQuery.list().size());
-  }
-
-  @Test
-  public void testVariableConditionWithVariableNameAndEvent() {
-
-    //given process with boundary conditional event and defined variable name and event
-    deployBoundaryEventProcessWithVarNameAndEvents(true, CONDITIONAL_VAR_EVENT_UPDATE);
-
-    ProcessInstance procInst = runtimeService.startProcessInstanceByKey(CONDITIONAL_EVENT_PROCESS_KEY);
-    TaskQuery taskQuery = taskService.createTaskQuery().processInstanceId(procInst.getId());
-    Task task = taskQuery.singleResult();
-    assertNotNull(task);
-
-    //when variable with name `variable` is set on execution
-    taskService.setVariable(task.getId(), VARIABLE_NAME, 1);
-
-    //then nothing happens
-    task = taskQuery.singleResult();
-    assertNotNull(task);
-    assertEquals(TASK_BEFORE_CONDITION, task.getName());
-    assertEquals(1, conditionEventSubscriptionQuery.list().size());
-
-    //when variable with name `variable` is updated
-    taskService.setVariable(task.getId(), VARIABLE_NAME, 1);
-
-    //then execution is at user task after conditional event
-    tasksAfterVariableIsSet = taskQuery.list();
-    assertEquals(TASK_AFTER_CONDITION, tasksAfterVariableIsSet.get(0).getName());
-    assertEquals(0, conditionEventSubscriptionQuery.list().size());
-  }
-
-  @Test
-  public void testNonInterruptingVariableConditionWithVariableName() {
-
-    //given process with non interrupting boundary conditional event and defined variable name
-    deployBoundaryEventProcessWithVarName(false);
-
-    ProcessInstance procInst = runtimeService.startProcessInstanceByKey(CONDITIONAL_EVENT_PROCESS_KEY);
-    TaskQuery taskQuery = taskService.createTaskQuery().processInstanceId(procInst.getId());
-    Task task = taskQuery.singleResult();
-    assertNotNull(task);
-
-    //when variable with name `variable1` is set on execution
-    taskService.setVariable(task.getId(), VARIABLE_NAME + 1, 1);
-
-    //then nothing happens
-    task = taskQuery.singleResult();
-    assertNotNull(task);
-    assertEquals(TASK_BEFORE_CONDITION, task.getName());
-    assertEquals(1, conditionEventSubscriptionQuery.list().size());
-
-    //when variable with name `variable` is set, updated and deleted
-    taskService.setVariable(task.getId(), VARIABLE_NAME, 1); //create
-    taskService.setVariable(task.getId(), VARIABLE_NAME, 1); //update
-    taskService.removeVariable(task.getId(), VARIABLE_NAME); //delete
-
-    //then execution is for three times at user task after conditional event
-    assertEquals(3, taskService.createTaskQuery().taskName(TASK_AFTER_CONDITION).count());
-    tasksAfterVariableIsSet = taskQuery.list();
-    assertEquals(4, tasksAfterVariableIsSet.size());
-    assertEquals(1, conditionEventSubscriptionQuery.list().size());
-  }
-
-  @Test
-  public void testNonInterruptingVariableConditionWithVariableNameAndEvents() {
-
-    //given process with non interrupting boundary conditional event and defined variable name and events
-    deployBoundaryEventProcessWithVarNameAndEvents(false, CONDITIONAL_VAR_EVENTS);
-
-    ProcessInstance procInst = runtimeService.startProcessInstanceByKey(CONDITIONAL_EVENT_PROCESS_KEY);
-    TaskQuery taskQuery = taskService.createTaskQuery().processInstanceId(procInst.getId());
-    Task task = taskQuery.singleResult();
-    assertNotNull(task);
-
-    //when variable with name `variable` is set, updated and deleted
-    taskService.setVariable(task.getId(), VARIABLE_NAME, 1); //create
-    taskService.setVariable(task.getId(), VARIABLE_NAME, 1); //update
-    taskService.removeVariable(task.getId(), VARIABLE_NAME); //delete
-
-    //then execution is for two times at user task after conditional start event
-    assertEquals(2, taskService.createTaskQuery().taskName(TASK_AFTER_CONDITION).count());
-    tasksAfterVariableIsSet = taskQuery.list();
-    assertEquals(3, tasksAfterVariableIsSet.size());
-    assertEquals(1, conditionEventSubscriptionQuery.list().size());
-  }
-
   @Test
   public void testSetMultipleVariables() {
 
     // given
     BpmnModelInstance modelInstance = modify(TASK_MODEL)
-        .userTaskBuilder(TASK_BEFORE_CONDITION_ID)
-        .boundaryEvent()
-          .cancelActivity(true)
-          .conditionalEventDefinition("event1")
-          .condition("${variable1 == 1}")
-          .conditionalEventDefinitionDone()
-        .userTask("afterBoundary1")
-        .endEvent()
-        .moveToActivity(TASK_BEFORE_CONDITION_ID)
-        .boundaryEvent()
-          .cancelActivity(true)
-          .conditionalEventDefinition("event2")
-          .condition("${variable2 == 1}")
-          .conditionalEventDefinitionDone()
-        .userTask("afterBoundary2")
-        .endEvent()
-        .done();
+      .userTaskBuilder(TASK_BEFORE_CONDITION_ID)
+      .boundaryEvent()
+      .cancelActivity(true)
+      .conditionalEventDefinition("event1")
+      .condition("${variable1 == 1}")
+      .conditionalEventDefinitionDone()
+      .userTask("afterBoundary1")
+      .endEvent()
+      .moveToActivity(TASK_BEFORE_CONDITION_ID)
+      .boundaryEvent()
+      .cancelActivity(true)
+      .conditionalEventDefinition("event2")
+      .condition("${variable2 == 1}")
+      .conditionalEventDefinitionDone()
+      .userTask("afterBoundary2")
+      .endEvent()
+      .done();
 
     engine.manageDeployment(repositoryService.createDeployment().addModelInstance(CONDITIONAL_MODEL, modelInstance).deploy());
     runtimeService.startProcessInstanceByKey(CONDITIONAL_EVENT_PROCESS_KEY, Variables.createVariables().putValue("variable1", "44").putValue("variable2", "44"));
@@ -1714,75 +1599,15 @@ public class BoundaryConditionalEventTest extends AbstractConditionalEventTestCa
 
     // when
     taskService.setVariables(task.getId(), Variables
-        .createVariables()
-        .putValue("variable1", 1)
-        .putValue("variable2", 1));
+      .createVariables()
+      .putValue("variable1", 1)
+      .putValue("variable2", 1));
 
     // then
     assertEquals(1, taskService.createTaskQuery().count());
     tasksAfterVariableIsSet = taskService.createTaskQuery().list();
     String taskDefinitionKey = tasksAfterVariableIsSet.get(0).getTaskDefinitionKey();
     Assert.assertTrue("afterBoundary1".equals(taskDefinitionKey) || "afterBoundary2".equals(taskDefinitionKey));
-  }
-
-  @Test
-  public void testVariableConditionWithVariableEvent() {
-
-    //given process with boundary conditional event and defined variable event
-    deployBoundaryEventProcessWithVarEvents(true, CONDITIONAL_VAR_EVENT_UPDATE);
-
-    Map<String, Object> variables = Variables.createVariables();
-    variables.put(VARIABLE_NAME + 1, 0);
-    ProcessInstance procInst = runtimeService.startProcessInstanceByKey(CONDITIONAL_EVENT_PROCESS_KEY, variables);
-    TaskQuery taskQuery = taskService.createTaskQuery().processInstanceId(procInst.getId());
-    Task task = taskQuery.singleResult();
-    assertNotNull(task);
-
-    //when variable with name `variable` is set on execution
-    runtimeService.setVariable(procInst.getId(), VARIABLE_NAME, 1);
-
-    //then nothing happens
-    task = taskQuery.singleResult();
-    assertNotNull(task);
-    assertEquals(TASK_BEFORE_CONDITION, task.getName());
-    assertEquals(1, conditionEventSubscriptionQuery.list().size());
-
-    //when variable with name `variable1` is updated
-    runtimeService.setVariable(procInst.getId(), VARIABLE_NAME + 1, 1);
-
-    //then execution is at user task after conditional intermediate event
-    tasksAfterVariableIsSet = taskQuery.list();
-    assertEquals(TASK_AFTER_CONDITION, tasksAfterVariableIsSet.get(0).getName());
-    assertEquals(0, conditionEventSubscriptionQuery.list().size());
-  }
-
-  @Test
-  public void testNonInterruptingVariableConditionWithVariableEvent() {
-
-    //given process with non interrupting boundary conditional event and defined variable event
-    deployBoundaryEventProcessWithVarEvents(false, CONDITIONAL_VAR_EVENT_UPDATE);
-
-    ProcessInstance procInst = runtimeService.startProcessInstanceByKey(CONDITIONAL_EVENT_PROCESS_KEY);
-    TaskQuery taskQuery = taskService.createTaskQuery().processInstanceId(procInst.getId());
-    Task task = taskQuery.singleResult();
-    assertNotNull(task);
-
-    //when variable with name `variable` is set
-    taskService.setVariable(task.getId(), VARIABLE_NAME, 1); //create
-
-    //then nothing happens
-    task = taskQuery.singleResult();
-    assertNotNull(task);
-
-    //when variable is updated twice
-    taskService.setVariable(task.getId(), VARIABLE_NAME, 1); //update
-    taskService.setVariable(task.getId(), VARIABLE_NAME, 1); //update
-
-    //then execution is for two times at user task after conditional event
-    assertEquals(2, taskQuery.taskName(TASK_AFTER_CONDITION).count());
-    tasksAfterVariableIsSet = taskService.createTaskQuery().list();
-    assertEquals(3, tasksAfterVariableIsSet.size());
-    assertEquals(1, conditionEventSubscriptionQuery.list().size());
   }
 
   @Test
@@ -1804,58 +1629,6 @@ public class BoundaryConditionalEventTest extends AbstractConditionalEventTestCa
     tasksAfterVariableIsSet = taskQuery.list();
     assertEquals(AFTER_TASK, tasksAfterVariableIsSet.get(0).getName());
     assertEquals(0, conditionEventSubscriptionQuery.list().size());
-  }
-
-  protected void deployBoundaryEventProcessWithVarName(boolean interrupting) {
-    final BpmnModelInstance modelInstance = modify(TASK_MODEL)
-            .userTaskBuilder(TASK_BEFORE_CONDITION_ID)
-            .boundaryEvent()
-            .cancelActivity(interrupting)
-            .conditionalEventDefinition(CONDITIONAL_EVENT)
-            .condition(TRUE_CONDITION)
-            .camundaVariableName(VARIABLE_NAME)
-            .conditionalEventDefinitionDone()
-            .userTask()
-            .name(TASK_AFTER_CONDITION)
-            .endEvent()
-            .done();
-
-    engine.manageDeployment(repositoryService.createDeployment().addModelInstance(CONDITIONAL_MODEL, modelInstance).deploy());
-  }
-
-  protected void deployBoundaryEventProcessWithVarNameAndEvents(boolean interrupting, String varEvent) {
-    final BpmnModelInstance modelInstance = modify(TASK_MODEL)
-            .userTaskBuilder(TASK_BEFORE_CONDITION_ID)
-            .boundaryEvent()
-            .cancelActivity(interrupting)
-            .conditionalEventDefinition(CONDITIONAL_EVENT)
-            .condition(CONDITION_EXPR)
-            .camundaVariableName(VARIABLE_NAME)
-            .camundaVariableEvents(varEvent)
-            .conditionalEventDefinitionDone()
-            .userTask()
-            .name(TASK_AFTER_CONDITION)
-            .endEvent()
-            .done();
-
-    engine.manageDeployment(repositoryService.createDeployment().addModelInstance(CONDITIONAL_MODEL, modelInstance).deploy());
-  }
-
-  protected void deployBoundaryEventProcessWithVarEvents(boolean interrupting, String varEvent) {
-    final BpmnModelInstance modelInstance = modify(TASK_MODEL)
-            .userTaskBuilder(TASK_BEFORE_CONDITION_ID)
-            .boundaryEvent()
-            .cancelActivity(interrupting)
-            .conditionalEventDefinition(CONDITIONAL_EVENT)
-            .condition(CONDITION_EXPR)
-            .camundaVariableEvents(varEvent)
-            .conditionalEventDefinitionDone()
-            .userTask()
-            .name(TASK_AFTER_CONDITION)
-            .endEvent()
-            .done();
-
-    engine.manageDeployment(repositoryService.createDeployment().addModelInstance(CONDITIONAL_MODEL, modelInstance).deploy());
   }
 
   @Test

@@ -155,7 +155,7 @@
           SELECT
               SELF.PROC_DEF_KEY_ AS KEY_
           FROM
-              (SELECT DISTINCT DKEYS.PROC_DEF_KEY_ from ${prefix}ACT_HI_PROCINST DKEYS) SELF
+              (SELECT DISTINCT DKEYS.KEY_ as PROC_DEF_KEY_ from ${prefix}ACT_RE_PROCDEF DKEYS) SELF
           WHERE
               <include refid="org.camunda.bpm.engine.impl.persistence.entity.AuthorizationEntity.querySingleAuthorizationCheck" />
         ) AUTH

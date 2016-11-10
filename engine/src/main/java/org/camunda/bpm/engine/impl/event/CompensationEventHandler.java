@@ -18,11 +18,13 @@ import java.util.List;
 
 import org.camunda.bpm.engine.ProcessEngineException;
 import org.camunda.bpm.engine.impl.bpmn.helper.CompensationUtil;
+import org.camunda.bpm.engine.impl.bpmn.parser.EventSubscriptionDeclaration;
 import org.camunda.bpm.engine.impl.interceptor.CommandContext;
 import org.camunda.bpm.engine.impl.persistence.entity.EventSubscriptionEntity;
 import org.camunda.bpm.engine.impl.persistence.entity.ExecutionEntity;
 import org.camunda.bpm.engine.impl.pvm.delegate.CompositeActivityBehavior;
 import org.camunda.bpm.engine.impl.pvm.process.ActivityImpl;
+import org.camunda.bpm.engine.impl.pvm.process.ScopeImpl;
 import org.camunda.bpm.engine.impl.pvm.runtime.operation.PvmAtomicOperation;
 import static org.camunda.bpm.engine.impl.util.EnsureUtil.ensureNotNull;
 
@@ -71,7 +73,7 @@ public class CompensationEventHandler implements EventHandler {
           // since we already have a scope execution, we don't need to create another one
           // for a simple scoped compensation handler
           compensatingExecution.setActivity(compensationHandler);
-          compensatingExecution.performOperation(PvmAtomicOperation.ACTIVITY_START);
+          compensatingExecution.performOperation(PvmAtomicOperation.ACTIVITY_START_CREATE_SCOPE);
         }
 
 

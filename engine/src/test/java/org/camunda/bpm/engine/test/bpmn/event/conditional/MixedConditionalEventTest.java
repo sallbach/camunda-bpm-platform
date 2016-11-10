@@ -16,6 +16,7 @@
 package org.camunda.bpm.engine.test.bpmn.event.conditional;
 
 import org.camunda.bpm.engine.delegate.ExecutionListener;
+import org.camunda.bpm.engine.runtime.ActivityInstance;
 import org.camunda.bpm.engine.runtime.ProcessInstance;
 import org.camunda.bpm.engine.task.Task;
 import org.camunda.bpm.engine.task.TaskQuery;
@@ -814,7 +815,7 @@ public class MixedConditionalEventTest extends AbstractConditionalEventTestCase 
     assertEquals(3, conditionEventSubscriptionQuery.count());
   }
 
-  @Ignore
+  @Test
   @Deployment
   public void testCompensationWithConditionalEvents() {
     //given process with compensation and conditional events
@@ -829,5 +830,6 @@ public class MixedConditionalEventTest extends AbstractConditionalEventTestCase 
     //then compensation is triggered -> which triggers conditional events
     tasksAfterVariableIsSet = taskService.createTaskQuery().list();
     assertEquals(4, tasksAfterVariableIsSet.size());
+    assertEquals(4, taskService.createTaskQuery().taskName(TASK_AFTER_CONDITIONAL_START_EVENT).count());
   }
 }

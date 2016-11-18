@@ -651,7 +651,7 @@ public class MigrationEventSubProcessTest {
     MigrationPlan migrationPlan = rule.getRuntimeService()
       .createMigrationPlan(sourceProcessDefinition.getId(), targetProcessDefinition.getId())
       .mapActivities(USER_TASK_ID, USER_TASK_ID)
-      .mapActivities(EVENT_SUB_PROCESS_START_ID, EVENT_SUB_PROCESS_START_ID)//.updateEventTrigger()
+      .mapActivities(EVENT_SUB_PROCESS_START_ID, EVENT_SUB_PROCESS_START_ID).updateEventTrigger()
       .build();
 
     // when process is migrated without update event trigger

@@ -17,6 +17,7 @@
 
 package org.camunda.bpm.engine.test.api.runtime.migration;
 
+import org.camunda.bpm.engine.migration.MigrationInstructionBuilder;
 import org.camunda.bpm.engine.migration.MigrationPlan;
 import org.camunda.bpm.engine.repository.ProcessDefinition;
 import org.camunda.bpm.engine.runtime.EventSubscription;
@@ -64,6 +65,14 @@ public class MigrationBoundaryEventsParameterizedTest {
 
     public void assertMigration(MigrationTestRule testHelper, String activityIdBefore, String activityIdAfter) {
       testHelper.assertEventSubscriptionMigrated(activityIdBefore, activityIdAfter, getEventName());
+    }
+
+    public MigrationInstructionBuilder createMigrationOfBoundaryEvents(ProcessEngineRule rule,
+                                                                       String sourceProcDefId, String targetProcDefId,
+                                                                       String sourceBoundaryId, String targetBoundaryId) {
+      return rule.getRuntimeService()
+        .createMigrationPlan(sourceProcDefId, targetProcDefId)
+        .mapActivities(sourceBoundaryId, targetBoundaryId);
     }
 
     public abstract void triggerBoundaryEvent(MigrationTestRule testHelper);
@@ -223,6 +232,16 @@ public class MigrationBoundaryEventsParameterizedTest {
         @Override
         public void triggerBoundaryEvent(MigrationTestRule testHelper) {
           testHelper.setAnyVariable(testHelper.snapshotAfterMigration.getProcessInstanceId());
+        }
+
+        @Override
+        public MigrationInstructionBuilder createMigrationOfBoundaryEvents(ProcessEngineRule rule,
+                                                                          String sourceProcDefId, String targetProcDefId,
+                                                                          String sourceBoundaryId, String targetBoundaryId) {
+          return rule.getRuntimeService()
+            .createMigrationPlan(sourceProcDefId, targetProcDefId)
+            .mapActivities(sourceBoundaryId, targetBoundaryId)
+            .updateEventTrigger();
         }
 
         @Override
@@ -640,10 +659,10 @@ public class MigrationBoundaryEventsParameterizedTest {
     ProcessDefinition sourceProcessDefinition = testHelper.deployAndGetDefinition(sourceProcess);
     ProcessDefinition targetProcessDefinition = testHelper.deployAndGetDefinition(targetProcess);
 
-    MigrationPlan migrationPlan = rule.getRuntimeService()
-      .createMigrationPlan(sourceProcessDefinition.getId(), targetProcessDefinition.getId())
+    MigrationPlan migrationPlan = configuration.createMigrationOfBoundaryEvents(rule,
+        sourceProcessDefinition.getId(), targetProcessDefinition.getId(),
+        BOUNDARY_ID, NEW_BOUNDARY_ID)
       .mapActivities("subProcess1", "subProcess1")
-      .mapActivities(BOUNDARY_ID, NEW_BOUNDARY_ID)
       .mapActivities("subProcess2", "subProcess2")
       .mapActivities("userTask1", "userTask1")
       .mapActivities("userTask2", "userTask2")

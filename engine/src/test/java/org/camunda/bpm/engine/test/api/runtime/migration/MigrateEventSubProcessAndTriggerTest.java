@@ -18,6 +18,7 @@
 package org.camunda.bpm.engine.test.api.runtime.migration;
 
 import org.camunda.bpm.engine.impl.jobexecutor.TimerStartEventSubprocessJobHandler;
+import org.camunda.bpm.engine.impl.test.TestHelper;
 import org.camunda.bpm.engine.migration.MigrationPlan;
 import org.camunda.bpm.engine.repository.ProcessDefinition;
 import org.camunda.bpm.engine.runtime.ProcessInstance;
@@ -51,6 +52,16 @@ public class MigrateEventSubProcessAndTriggerTest {
       testHelper.assertEventSubscriptionMigrated(EventSubProcessModels.EVENT_SUB_PROCESS_START_ID,
         EventSubProcessModels.EVENT_SUB_PROCESS_START_ID,
         getEventName());
+    }
+
+    public MigrationPlan getMigrationPlan(ProcessEngineRule rule,
+                                          String sourceProcessDefinitionId,
+                                          String targetProcessDefinitionId) {
+      return rule.getRuntimeService()
+        .createMigrationPlan(sourceProcessDefinitionId, targetProcessDefinitionId)
+        .mapActivities(EventSubProcessModels.USER_TASK_ID, EventSubProcessModels.USER_TASK_ID)
+        .mapActivities(EventSubProcessModels.EVENT_SUB_PROCESS_START_ID, EventSubProcessModels.EVENT_SUB_PROCESS_START_ID)
+        .build();
     }
   }
 
@@ -146,6 +157,18 @@ public class MigrateEventSubProcessAndTriggerTest {
             testHelper.setAnyVariable(testHelper.snapshotAfterMigration.getProcessInstanceId());
           }
 
+
+          public MigrationPlan getMigrationPlan(ProcessEngineRule rule,
+                                                String sourceProcessDefinitionId,
+                                                String targetProcessDefinitionId) {
+            return rule.getRuntimeService()
+              .createMigrationPlan(sourceProcessDefinitionId, targetProcessDefinitionId)
+              .mapActivities(EventSubProcessModels.USER_TASK_ID, EventSubProcessModels.USER_TASK_ID)
+              .mapActivities(EventSubProcessModels.EVENT_SUB_PROCESS_START_ID, EventSubProcessModels.EVENT_SUB_PROCESS_START_ID)
+              .updateEventTrigger()
+              .build();
+          }
+
           @Override
           public String getEventName() {
             return null;
@@ -176,11 +199,7 @@ public class MigrateEventSubProcessAndTriggerTest {
 
     ProcessInstance processInstance = rule.getRuntimeService().startProcessInstanceById(sourceProcessDefinition.getId());
 
-    MigrationPlan migrationPlan = rule.getRuntimeService()
-      .createMigrationPlan(sourceProcessDefinition.getId(), targetProcessDefinition.getId())
-      .mapActivities(EventSubProcessModels.USER_TASK_ID, EventSubProcessModels.USER_TASK_ID)
-      .mapActivities(EventSubProcessModels.EVENT_SUB_PROCESS_START_ID, EventSubProcessModels.EVENT_SUB_PROCESS_START_ID)
-      .build();
+    MigrationPlan migrationPlan = configuration.getMigrationPlan(rule, sourceProcessDefinition.getId(), targetProcessDefinition.getId());
 
     // when
     testHelper.migrateProcessInstance(migrationPlan, processInstance);

@@ -77,6 +77,7 @@ import org.camunda.bpm.engine.impl.util.EnsureUtil;
 public class DbEntityManager implements Session, EntityLoadListener {
 
   protected static final EnginePersistenceLogger LOG = ProcessEngineLogger.PERSISTENCE_LOGGER;
+  protected static final String TOGGLE_FOREIGN_KEY_STMT = "toggleForeignKey";
 
   protected List<OptimisticLockingListener> optimisticLockingListeners;
 
@@ -87,6 +88,7 @@ public class DbEntityManager implements Session, EntityLoadListener {
   protected DbOperationManager dbOperationManager;
 
   protected PersistenceSession persistenceSession;
+  protected boolean isIgnoreForeignKeysForNextFlush;
 
   public DbEntityManager(IdGenerator idGenerator, PersistenceSession persistenceSession) {
     this.idGenerator = idGenerator;
@@ -191,6 +193,7 @@ public class DbEntityManager implements Session, EntityLoadListener {
     if (persistentObject!=null) {
       return persistentObject;
     }
+
     persistentObject = persistenceSession.selectById(entityClass, id);
 
     if (persistentObject==null) {
@@ -278,11 +281,20 @@ public class DbEntityManager implements Session, EntityLoadListener {
     flushDbOperationManager();
   }
 
+  public void setIgnoreForeignKeysForNextFlush(boolean ignoreForeignKeysForNextFlush) {
+    isIgnoreForeignKeysForNextFlush = ignoreForeignKeysForNextFlush;
+  }
+
   protected void flushDbOperationManager() {
     // obtain totally ordered operation list from operation manager
     List<DbOperation> operationsToFlush = dbOperationManager.calculateFlush();
     LOG.databaseFlushSummary(operationsToFlush);
 
+    // if we want to delete all table data, on tables which have self references,
+    // as bulk operation on MySQL and MariaDB we need to turn the foreign key check off
+    if (isIgnoreForeignKeysForNextFlush) {
+      persistenceSession.executeUpdate(TOGGLE_FOREIGN_KEY_STMT, false);
+    }
     // execute the flush
     for (DbOperation dbOperation : operationsToFlush) {
       try {
@@ -294,6 +306,10 @@ public class DbEntityManager implements Session, EntityLoadListener {
       if(dbOperation.isFailed()) {
         handleOptimisticLockingException(dbOperation);
       }
+    }
+    if (isIgnoreForeignKeysForNextFlush) {
+      persistenceSession.executeUpdate(TOGGLE_FOREIGN_KEY_STMT, true);
+      isIgnoreForeignKeysForNextFlush = false;
     }
   }
 
@@ -570,5 +586,7 @@ public class DbEntityManager implements Session, EntityLoadListener {
   public List<String> getTableNamesPresentInDatabase() {
     return persistenceSession.getTableNamesPresent();
   }
+
+
 
 }

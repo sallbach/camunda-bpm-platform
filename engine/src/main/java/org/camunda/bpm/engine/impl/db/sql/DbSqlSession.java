@@ -232,7 +232,8 @@ public class DbSqlSession extends AbstractPersistenceSession {
     entityUpdated(dbEntity);
   }
 
-  protected int executeUpdate(String updateStatement, Object parameter) {
+  @Override
+  public int executeUpdate(String updateStatement, Object parameter) {
     updateStatement = dbSqlSessionFactory.mapStatement(updateStatement);
     return sqlSession.update(updateStatement, parameter);
   }

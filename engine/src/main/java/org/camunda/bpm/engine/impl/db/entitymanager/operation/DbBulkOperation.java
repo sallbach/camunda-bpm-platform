@@ -12,8 +12,6 @@
  */
 package org.camunda.bpm.engine.impl.db.entitymanager.operation;
 
-import org.camunda.bpm.engine.impl.db.DbEntity;
-
 /**
  * A bulk operation
  *
@@ -21,16 +19,6 @@ import org.camunda.bpm.engine.impl.db.DbEntity;
  *
  */
 public class DbBulkOperation extends DbOperation {
-
-  public DbBulkOperation() {
-  }
-
-  public DbBulkOperation(DbOperationType operationType, Class<? extends DbEntity> entityType, String statement, Object parameter) {
-    this.operationType = operationType;
-    this.entityType = entityType;
-    this.statement = statement;
-    this.parameter = parameter;
-  }
 
   protected String statement;
   protected Object parameter;

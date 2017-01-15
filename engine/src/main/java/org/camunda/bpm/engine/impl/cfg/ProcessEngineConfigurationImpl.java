@@ -613,8 +613,6 @@ public abstract class ProcessEngineConfigurationImpl extends ProcessEngineConfig
    */
   protected boolean restrictUserOperationLogToAuthenticatedUsers = true;
 
-  protected boolean disableStrictCallActivityValidation = false;
-
   protected boolean isBpmnStacktraceVerbose = false;
 
   protected boolean forceCloseMybatisConnectionPool = true;
@@ -3503,14 +3501,6 @@ public abstract class ProcessEngineConfigurationImpl extends ProcessEngineConfig
 
   public boolean isUseSharedSqlSessionFactory() {
     return isUseSharedSqlSessionFactory;
-  }
-
-  public boolean getDisableStrictCallActivityValidation() {
-    return disableStrictCallActivityValidation;
-  }
-
-  public void setDisableStrictCallActivityValidation(boolean disableStrictCallActivityValidation) {
-    this.disableStrictCallActivityValidation = disableStrictCallActivityValidation;
   }
 
 }

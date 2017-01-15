@@ -588,18 +588,6 @@ public class BpmnParseTest extends PluggableProcessEngineTestCase {
     }
   }
 
-  public void testNoCamundaInSourceShouldWithoutValidation() {
-    try {
-      processEngineConfiguration.setDisableStrictCallActivityValidation(true);
-
-      String resource = TestHelper.getBpmnProcessDefinitionResource(getClass(), "testNoCamundaInSourceThrowsError");
-      repositoryService.createDeployment().name(resource).addClasspathResource(resource).deploy();
-    } finally {
-      processEngineConfiguration.setDisableStrictCallActivityValidation(false);
-      repositoryService.deleteDeployment(repositoryService.createDeploymentQuery().singleResult().getId(), true);
-    }
-  }
-
   public void testEmptyCamundaInSourceThrowsError() {
     try {
       String resource = TestHelper.getBpmnProcessDefinitionResource(getClass(), "testEmptyCamundaInSourceThrowsError");
@@ -607,18 +595,6 @@ public class BpmnParseTest extends PluggableProcessEngineTestCase {
       fail("Process camunda:in extension element should contain source!");
     } catch (ProcessEngineException e) {
       assertTextPresent("Empty attribute 'source' when passing variables", e.getMessage());
-    }
-  }
-
-  public void testEmptyCamundaInSourceWithoutValidation() {
-    try {
-      processEngineConfiguration.setDisableStrictCallActivityValidation(true);
-
-      String resource = TestHelper.getBpmnProcessDefinitionResource(getClass(), "testEmptyCamundaInSourceThrowsError");
-      repositoryService.createDeployment().name(resource).addClasspathResource(resource).deploy();
-    } finally {
-      processEngineConfiguration.setDisableStrictCallActivityValidation(false);
-      repositoryService.deleteDeployment(repositoryService.createDeploymentQuery().singleResult().getId(), true);
     }
   }
 
@@ -632,20 +608,6 @@ public class BpmnParseTest extends PluggableProcessEngineTestCase {
     }
   }
 
-  public void testNoCamundaInTargetWithoutValidation() {
-    try {
-      processEngineConfiguration.setDisableStrictCallActivityValidation(true);
-
-      String resource = TestHelper.getBpmnProcessDefinitionResource(getClass(), "testNoCamundaInTargetThrowsError");
-      repositoryService.createDeployment().name(resource).addClasspathResource(resource).deploy();
-      fail("Process camunda:in extension element should contain target!");
-    } catch (ProcessEngineException e) {
-      assertTextPresent("Missing attribute 'target' when attribute 'source' or 'sourceExpression' is set", e.getMessage());
-    } finally {
-      processEngineConfiguration.setDisableStrictCallActivityValidation(false);
-    }
-  }
-
   public void testEmptyCamundaInTargetThrowsError() {
     try {
       String resource = TestHelper.getBpmnProcessDefinitionResource(getClass(), "testEmptyCamundaInTargetThrowsError");
@@ -653,18 +615,6 @@ public class BpmnParseTest extends PluggableProcessEngineTestCase {
       fail("Process camunda:in extension element should contain target!");
     } catch (ProcessEngineException e) {
       assertTextPresent("Empty attribute 'target' when attribute 'source' or 'sourceExpression' is set", e.getMessage());
-    }
-  }
-
-  public void testEmptyCamundaInTargetWithoutValidation() {
-    try {
-      processEngineConfiguration.setDisableStrictCallActivityValidation(true);
-
-      String resource = TestHelper.getBpmnProcessDefinitionResource(getClass(), "testEmptyCamundaInTargetThrowsError");
-      repositoryService.createDeployment().name(resource).addClasspathResource(resource).deploy();
-    } finally {
-      processEngineConfiguration.setDisableStrictCallActivityValidation(false);
-      repositoryService.deleteDeployment(repositoryService.createDeploymentQuery().singleResult().getId(), true);
     }
   }
 
@@ -678,18 +628,6 @@ public class BpmnParseTest extends PluggableProcessEngineTestCase {
     }
   }
 
-  public void testNoCamundaOutSourceWithoutValidation() {
-    try {
-      processEngineConfiguration.setDisableStrictCallActivityValidation(true);
-
-      String resource = TestHelper.getBpmnProcessDefinitionResource(getClass(), "testNoCamundaOutSourceThrowsError");
-      repositoryService.createDeployment().name(resource).addClasspathResource(resource).deploy();
-    } finally {
-      processEngineConfiguration.setDisableStrictCallActivityValidation(false);
-      repositoryService.deleteDeployment(repositoryService.createDeploymentQuery().singleResult().getId(), true);
-    }
-  }
-
   public void testEmptyCamundaOutSourceThrowsError() {
     try {
       String resource = TestHelper.getBpmnProcessDefinitionResource(getClass(), "testEmptyCamundaOutSourceThrowsError");
@@ -697,18 +635,6 @@ public class BpmnParseTest extends PluggableProcessEngineTestCase {
       fail("Process camunda:out extension element should contain source!");
     } catch (ProcessEngineException e) {
       assertTextPresent("Empty attribute 'source' when passing variables", e.getMessage());
-    }
-  }
-
-  public void testEmptyCamundaOutSourceWithoutValidation() {
-    try {
-      processEngineConfiguration.setDisableStrictCallActivityValidation(true);
-
-      String resource = TestHelper.getBpmnProcessDefinitionResource(getClass(), "testEmptyCamundaOutSourceThrowsError");
-      repositoryService.createDeployment().name(resource).addClasspathResource(resource).deploy();
-    } finally {
-      processEngineConfiguration.setDisableStrictCallActivityValidation(false);
-      repositoryService.deleteDeployment(repositoryService.createDeploymentQuery().singleResult().getId(), true);
     }
   }
 
@@ -722,20 +648,6 @@ public class BpmnParseTest extends PluggableProcessEngineTestCase {
     }
   }
 
-  public void testNoCamundaOutTargetWithoutValidation() {
-    try {
-      processEngineConfiguration.setDisableStrictCallActivityValidation(true);
-
-      String resource = TestHelper.getBpmnProcessDefinitionResource(getClass(), "testNoCamundaOutTargetThrowsError");
-      repositoryService.createDeployment().name(resource).addClasspathResource(resource).deploy();
-      fail("Process camunda:out extension element should contain target!");
-    } catch (ProcessEngineException e) {
-      assertTextPresent("Missing attribute 'target' when attribute 'source' or 'sourceExpression' is set", e.getMessage());
-    } finally {
-      processEngineConfiguration.setDisableStrictCallActivityValidation(false);
-    }
-  }
-
   public void testEmptyCamundaOutTargetThrowsError() {
     try {
       String resource = TestHelper.getBpmnProcessDefinitionResource(getClass(), "testEmptyCamundaOutTargetThrowsError");
@@ -743,18 +655,6 @@ public class BpmnParseTest extends PluggableProcessEngineTestCase {
       fail("Process camunda:out extension element should contain target!");
     } catch (ProcessEngineException e) {
       assertTextPresent("Empty attribute 'target' when attribute 'source' or 'sourceExpression' is set", e.getMessage());
-    }
-  }
-
-  public void testEmptyCamundaOutTargetWithoutValidation() {
-    try {
-      processEngineConfiguration.setDisableStrictCallActivityValidation(true);
-
-      String resource = TestHelper.getBpmnProcessDefinitionResource(getClass(), "testEmptyCamundaOutTargetThrowsError");
-      repositoryService.createDeployment().name(resource).addClasspathResource(resource).deploy();
-    } finally {
-      processEngineConfiguration.setDisableStrictCallActivityValidation(false);
-      repositoryService.deleteDeployment(repositoryService.createDeploymentQuery().singleResult().getId(), true);
     }
   }
 

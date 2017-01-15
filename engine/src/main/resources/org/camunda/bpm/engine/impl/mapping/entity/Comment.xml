@@ -159,7 +159,7 @@
         and OPERATION_TYPE_ in ('AddAttachment',
                                 'DeleteAttachment')
     ) RES
-    ${orderBy}
+    order by ${orderBy}
     ${limitAfter}
   </sql>
 

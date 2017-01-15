@@ -26,7 +26,6 @@ import org.camunda.bpm.engine.impl.bpmn.listener.ClassDelegateExecutionListener;
 import org.camunda.bpm.engine.impl.bpmn.listener.DelegateExpressionExecutionListener;
 import org.camunda.bpm.engine.impl.bpmn.listener.ExpressionExecutionListener;
 import org.camunda.bpm.engine.impl.bpmn.listener.ScriptExecutionListener;
-import org.camunda.bpm.engine.impl.context.Context;
 import org.camunda.bpm.engine.impl.core.model.*;
 import org.camunda.bpm.engine.impl.core.model.BaseCallableElement.CallableElementBinding;
 import org.camunda.bpm.engine.impl.core.model.Properties;
@@ -3713,56 +3712,51 @@ public class BpmnParse extends Parse {
     if (ALL.equals(variables)) {
       parameter.setAllVariables(true);
     } else {
-      boolean strictValidation = !Context.getProcessEngineConfiguration().getDisableStrictCallActivityValidation();
 
-      ParameterValueProvider sourceValueProvider = new NullValueProvider();
+      ParameterValueProvider source = parseSourceOfCallableElementProvider(parameterElement);
+      parameter.setSourceValueProvider(source);
 
-      String source = parameterElement.attribute("source");
-      if (source != null) {
-        if (!source.isEmpty()) {
-          sourceValueProvider = new ConstantValueProvider(source);
-        }
-        else {
-          if (strictValidation) {
-            addError("Empty attribute 'source' when passing variables", parameterElement);
-          }
-          else {
-            source = null;
-          }
-        }
-      }
-
-      if (source == null) {
-        source = parameterElement.attribute("sourceExpression");
-
-        if (source != null) {
-          if (!source.isEmpty()) {
-            Expression expression = expressionManager.createExpression(source);
-            sourceValueProvider = new ElValueProvider(expression);
-          }
-          else if (strictValidation) {
-            addError("Empty attribute 'sourceExpression' when passing variables", parameterElement);
-          }
-        }
-      }
-
-      if (strictValidation && source == null) {
-        addError("Missing parameter 'source' or 'sourceExpression' when passing variables", parameterElement);
-      }
-
-      parameter.setSourceValueProvider(sourceValueProvider);
-
-      String target = parameterElement.attribute("target");
-      if ((strictValidation || source != null && !source.isEmpty()) && target == null) {
-        addError("Missing attribute 'target' when attribute 'source' or 'sourceExpression' is set", parameterElement);
-      }
-      else if (strictValidation && target != null && target.isEmpty()) {
-        addError("Empty attribute 'target' when attribute 'source' or 'sourceExpression' is set", parameterElement);
-      }
+      String target = parseTargetOfCallableElementProvider(parameterElement);
       parameter.setTarget(target);
     }
 
     return parameter;
+  }
+
+  protected ParameterValueProvider parseSourceOfCallableElementProvider(Element parameterElement) {
+    ParameterValueProvider sourceValueProvider = new NullValueProvider();
+    String source = parameterElement.attribute("source");
+    if (source != null) {
+      if (source.isEmpty()) {
+        addError("Empty attribute 'source' when passing variables", parameterElement);
+      }
+      sourceValueProvider = new ConstantValueProvider(source);
+    } else {
+      source = parameterElement.attribute("sourceExpression");
+      if (source != null) {
+        if (source.isEmpty()) {
+          addError("Empty attribute 'sourceExpression' when passing variables", parameterElement);
+        }
+        Expression expression = expressionManager.createExpression(source);
+        sourceValueProvider = new ElValueProvider(expression);
+      }
+    }
+
+    if (source == null) {
+      addError("Missing parameter 'source' or 'sourceExpression' when passing variables", parameterElement);
+    }
+
+    return sourceValueProvider;
+  }
+
+  protected String parseTargetOfCallableElementProvider(Element parameterElement) {
+    String target = parameterElement.attribute("target");
+    if (target == null) {
+      addError("Missing attribute 'target' when attribute 'source' or 'sourceExpression' is set", parameterElement);
+    } else if (target.isEmpty()) {
+      addError("Empty attribute 'target' when attribute 'source' or 'sourceExpression' is set", parameterElement);
+    }
+    return target;
   }
 
   /**

@@ -58,7 +58,6 @@ public class MetricsTest {
       meter.getAndClear();
     }
     managementService.deleteMetrics(null);
-    processEngineConfiguration.setDbMetricsReporterActivate(false);
   }
 
   @BeforeClass

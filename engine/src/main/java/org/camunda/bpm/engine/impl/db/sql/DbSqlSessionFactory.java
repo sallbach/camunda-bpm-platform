@@ -79,7 +79,7 @@ public class DbSqlSessionFactory implements SessionFactory {
 
   static {
 
-    String defaultOrderBy = "order by ${orderBy}";
+    String defaultOrderBy = "${orderBy}";
 
     // h2
     databaseSpecificLimitBeforeStatements.put(H2, "");
@@ -139,14 +139,12 @@ public class DbSqlSessionFactory implements SessionFactory {
       databaseSpecificDummyTable.put(mysqlLikeDatabase, "");
       databaseSpecificTrueConstant.put(mysqlLikeDatabase, "1");
       databaseSpecificFalseConstant.put(mysqlLikeDatabase, "0");
-      databaseSpecificIfNull.put(mysqlLikeDatabase, "IFNULL");      
-      
+      databaseSpecificIfNull.put(mysqlLikeDatabase, "IFNULL");
       databaseSpecificExistsStart.put(mysqlLikeDatabase, "EXISTS(");
       databaseSpecificExistsEnd.put(mysqlLikeDatabase, ")");
       databaseSpecificCaseWhenInStart.put(mysqlLikeDatabase, "");
       databaseSpecificCaseWhenInEnd.put(mysqlLikeDatabase, "");
-      
-      addDatabaseSpecificStatement(mysqlLikeDatabase, "toggleForeignKey", "toggleForeignKey_mysql");
+
       addDatabaseSpecificStatement(mysqlLikeDatabase, "selectProcessDefinitionsByQueryCriteria", "selectProcessDefinitionsByQueryCriteria_mysql");
       addDatabaseSpecificStatement(mysqlLikeDatabase, "selectProcessDefinitionCountByQueryCriteria", "selectProcessDefinitionCountByQueryCriteria_mysql");
       addDatabaseSpecificStatement(mysqlLikeDatabase, "selectDeploymentsByQueryCriteria", "selectDeploymentsByQueryCriteria_mysql");
@@ -287,7 +285,6 @@ public class DbSqlSessionFactory implements SessionFactory {
     databaseSpecificCaseWhenInStart.put(DB2, "");
     databaseSpecificCaseWhenInEnd.put(DB2, "");
     
-
     addDatabaseSpecificStatement(DB2, "selectMeterLogAggregatedByTimeInterval", "selectMeterLogAggregatedByTimeInterval_db2_or_mssql");
     addDatabaseSpecificStatement(DB2, "selectExecutionByNativeQuery", "selectExecutionByNativeQuery_mssql_or_db2");
     addDatabaseSpecificStatement(DB2, "selectHistoricActivityInstanceByNativeQuery", "selectHistoricActivityInstanceByNativeQuery_mssql_or_db2");
@@ -366,7 +363,7 @@ public class DbSqlSessionFactory implements SessionFactory {
     databaseSpecificLimitAfterStatements.put(MSSQL, databaseSpecificInnerLimitAfterStatements.get(MSSQL) + " ORDER BY SUB.rnk");
     databaseSpecificLimitBetweenStatements.put(MSSQL, ", row_number() over (ORDER BY ${orderBy}) rnk FROM ( select distinct RES.* ");
     databaseSpecificLimitBetweenFilterStatements.put(MSSQL, "");
-    databaseSpecificOrderByStatements.put(MSSQL, "");
+    databaseSpecificOrderByStatements.put(MSSQL, defaultOrderBy);
     databaseSpecificLimitBeforeNativeQueryStatements.put(MSSQL, "SELECT SUB.* FROM ( select RES.* , row_number() over (ORDER BY ${orderBy}) rnk FROM (");
     databaseSpecificDistinct.put(MSSQL, "");
 
